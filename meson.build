@@ -1,5 +1,5 @@
 project('gdm', 'c',
-  version: '46.2',
+  version: '47.alpha',
   license: 'GPL2+',
   meson_version: '>= 0.57',
 )
