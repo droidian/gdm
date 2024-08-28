@@ -1,3 +1,9 @@
+gdm3 (47~alpha-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 28 Aug 2024 13:03:30 +0100
+
 gdm3 (46.2-1) unstable; urgency=medium
 
   [ Jeremy Bícha ]
