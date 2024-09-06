@@ -122,6 +122,7 @@ Depends: gir1.2-gdm-1.0 (= ${binary:Version}),
          ${gir:Depends},
          ${misc:Depends},
          ${shlibs:Depends}
+Provides: ${gir:Provides}
 Description: GNOME Display Manager (development files)
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
