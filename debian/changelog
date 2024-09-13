@@ -1,11 +1,11 @@
-gdm3 (47~alpha-1) UNRELEASED; urgency=medium
+gdm3 (47~rc-1) UNRELEASED; urgency=medium
 
   * New upstream release
   * Standards-Version: 4.7.0 (no changes required)
   * Update Lintian overrides
   * d/control: Add ${gir:Provides} to libgdm-dev
 
- -- Simon McVittie <smcv@debian.org>  Wed, 28 Aug 2024 13:03:30 +0100
+ -- Simon McVittie <smcv@debian.org>  Fri, 13 Sep 2024 15:34:36 +0100
 
 gdm3 (46.2-1) unstable; urgency=medium
 
