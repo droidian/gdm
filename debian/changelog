@@ -1,11 +1,20 @@
 gdm3 (47~rc-1) UNRELEASED; urgency=medium
 
   * New upstream release
+  * d/rules: Explicitly enable X11 support.
+    If upstream disables this in some future release, we'll want it to be
+    an intentional decision whether we follow that.
+  * d/control: Drop dependency on libcanberra-gtk, no longer checked
+  * d/control: Don't build gdm3 binary package on armel.
+    gdm3 requires GNOME Shell, which is unlikely to be practically useful
+    on the older ARM machines that can't run armhf or arm64. GNOME Shell
+    also requires gjs, which is likely to be removed from armel.
+    (Helps: #1080521)
   * Standards-Version: 4.7.0 (no changes required)
   * Update Lintian overrides
   * d/control: Add ${gir:Provides} to libgdm-dev
 
- -- Simon McVittie <smcv@debian.org>  Fri, 13 Sep 2024 15:34:36 +0100
+ -- Simon McVittie <smcv@debian.org>  Fri, 13 Sep 2024 15:45:58 +0100
 
 gdm3 (46.2-1) unstable; urgency=medium
 
