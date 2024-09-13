@@ -71,6 +71,8 @@ struct _GdmLocalDisplayFactory
         guint            seat_new_id;
         guint            seat_removed_id;
         guint            seat_properties_changed_id;
+        guint            seat_attention_key;
+
 
         gboolean         seat0_has_platform_graphics;
         gboolean         seat0_has_boot_up_graphics;
@@ -203,8 +205,16 @@ get_preferred_display_server (GdmLocalDisplayFactory *factory)
         g_autofree gchar *preferred_display_server = NULL;
         gboolean wayland_enabled = FALSE, xorg_enabled = FALSE;
 
+#if defined (ENABLE_WAYLAND_SUPPORT) && defined (ENABLE_X11_SUPPORT)
         gdm_settings_direct_get_boolean (GDM_KEY_WAYLAND_ENABLE, &wayland_enabled);
         gdm_settings_direct_get_boolean (GDM_KEY_XORG_ENABLE, &xorg_enabled);
+#elif defined (ENABLE_WAYLAND_SUPPORT)
+        wayland_enabled = TRUE;
+#elif defined (ENABLE_X11_SUPPORT)
+        xorg_enabled = TRUE;
+#else
+#error "GDM needs to be compiled with support for either wayland or Xorg or both"
+#endif
 
         if (wayland_enabled && !xorg_enabled) {
                 return g_strdup ("wayland");
@@ -219,21 +229,27 @@ get_preferred_display_server (GdmLocalDisplayFactory *factory)
         if (g_strcmp0 (preferred_display_server, "wayland") == 0) {
                 if (wayland_enabled)
                         return g_strdup (preferred_display_server);
+#ifdef ENABLE_X11_SUPPORT
                 else
                         return g_strdup ("xorg");
+#endif
         }
 
         if (g_strcmp0 (preferred_display_server, "xorg") == 0) {
+#ifdef ENABLE_X11_SUPPORT
                 if (xorg_enabled)
                         return g_strdup (preferred_display_server);
                 else
+#endif
                         return g_strdup ("wayland");
         }
 
+#ifdef ENABLE_X11_SUPPORT
         if (g_strcmp0 (preferred_display_server, "legacy-xorg") == 0) {
                 if (xorg_enabled)
                         return g_strdup (preferred_display_server);
         }
+#endif
 
         return g_strdup ("none");
 }
@@ -247,7 +263,9 @@ struct GdmDisplayServerConfiguration {
 #ifdef ENABLE_WAYLAND_SUPPORT
         { "wayland", GDM_KEY_WAYLAND_ENABLE, "/usr/bin/Xwayland", "wayland" },
 #endif
+#ifdef HAVE_X11_SUPPORT
         { "xorg", GDM_KEY_XORG_ENABLE, "/usr/bin/Xorg", "x11" },
+#endif
         { NULL, NULL, NULL },
 };
 
@@ -266,8 +284,10 @@ display_server_enabled (GdmLocalDisplayFactory *factory,
                                   display_server))
                         continue;
 
+#if defined (ENABLE_WAYLAND_SUPPORT) && defined (ENABLE_X11_SUPPORT)
                 if (!gdm_settings_direct_get_boolean (key, &enabled) || !enabled)
                         return FALSE;
+#endif
 
                 if (!g_file_test (binary, G_FILE_TEST_IS_EXECUTABLE))
                         return FALSE;
@@ -316,20 +336,24 @@ gdm_local_display_factory_get_session_types (GdmLocalDisplayFactory *factory,
         wayland_preferred = g_str_equal (preferred_display_server, "wayland");
         xorg_preferred = g_str_equal (preferred_display_server, "xorg");
 
+#ifdef ENABLE_X11_SUPPORT
         if (wayland_preferred)
                 fallback_display_server = "xorg";
         else if (xorg_preferred)
                 fallback_display_server = "wayland";
         else
                 return NULL;
+#endif
 
-        if (!should_fall_back) {
+        if (!should_fall_back || fallback_display_server == NULL) {
                 if (display_server_enabled (factory, preferred_display_server))
                       g_ptr_array_add (session_types_array, (gpointer) get_session_type_for_display_server (factory, preferred_display_server));
         }
 
+#ifdef ENABLE_X11_SUPPORT
         if (display_server_enabled (factory, fallback_display_server))
                 g_ptr_array_add (session_types_array, (gpointer) get_session_type_for_display_server (factory, fallback_display_server));
+#endif
 
         if (session_types_array->len == 0)
                 return NULL;
@@ -898,11 +922,13 @@ ensure_display_for_seat (GdmLocalDisplayFactory *factory,
                                 return;
                         }
 
+#ifdef ENABLE_X11_SUPPORT
                         g_debug ("GdmLocalDisplayFactory: Assuming we can use seat0 for X11 even though system says it doesn't support graphics!");
                         g_debug ("GdmLocalDisplayFactory: This might indicate an issue where the framebuffer device is not tagged as master-of-seat in udev.");
                         seat_supports_graphics = TRUE;
                         g_strfreev (session_types);
                         session_types = g_strdupv ((char **) legacy_session_types);
+#endif
                 } else {
                         g_clear_handle_id (&factory->seat0_graphics_check_timeout_id, g_source_remove);
                 }
@@ -1019,13 +1045,13 @@ gdm_local_display_factory_sync_seats (GdmLocalDisplayFactory *factory)
 }
 
 static void
-on_seat_new (GDBusConnection *connection,
-             const gchar     *sender_name,
-             const gchar     *object_path,
-             const gchar     *interface_name,
-             const gchar     *signal_name,
-             GVariant        *parameters,
-             gpointer         user_data)
+on_seat_activate_greeter (GDBusConnection *connection,
+                          const gchar     *sender_name,
+                          const gchar     *object_path,
+                          const gchar     *interface_name,
+                          const gchar     *signal_name,
+                          GVariant        *parameters,
+                          gpointer         user_data)
 {
         const char *seat;
 
@@ -1363,7 +1389,7 @@ gdm_local_display_factory_start_monitor (GdmLocalDisplayFactory *factory)
                                                                          "/org/freedesktop/login1",
                                                                          NULL,
                                                                          G_DBUS_SIGNAL_FLAGS_NONE,
-                                                                         on_seat_new,
+                                                                         on_seat_activate_greeter,
                                                                          g_object_ref (factory),
                                                                          g_object_unref);
         factory->seat_removed_id = g_dbus_connection_signal_subscribe (factory->connection,
@@ -1386,6 +1412,17 @@ gdm_local_display_factory_start_monitor (GdmLocalDisplayFactory *factory)
                                                                                   on_seat_properties_changed,
                                                                                   g_object_ref (factory),
                                                                                   g_object_unref);
+        factory->seat_attention_key = g_dbus_connection_signal_subscribe (factory->connection,
+                                                                                "org.freedesktop.login1",
+                                                                                "org.freedesktop.login1.Manager",
+                                                                                "SecureAttentionKey",
+                                                                                "/org/freedesktop/login1",
+                                                                                NULL,
+                                                                                G_DBUS_SIGNAL_FLAGS_NONE,
+                                                                                on_seat_activate_greeter,
+                                                                                g_object_ref (factory),
+                                                                                g_object_unref);
+
 #ifdef HAVE_UDEV
         factory->gudev_client = g_udev_client_new (subsystems);
         factory->uevent_handler_id = g_signal_connect (factory->gudev_client,
@@ -1431,6 +1468,11 @@ gdm_local_display_factory_stop_monitor (GdmLocalDisplayFactory *factory)
                 g_dbus_connection_signal_unsubscribe (factory->connection,
                                                       factory->seat_properties_changed_id);
                 factory->seat_properties_changed_id = 0;
+        }
+        if (factory->seat_attention_key) {
+                g_dbus_connection_signal_unsubscribe (factory->connection,
+                                                      factory->seat_attention_key);
+                factory->seat_attention_key = 0;
         }
 #if defined(ENABLE_USER_DISPLAY_SERVER)
         g_clear_handle_id (&factory->active_vt_watch_id, g_source_remove);
