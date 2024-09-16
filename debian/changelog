@@ -1,6 +1,7 @@
-gdm3 (47~rc-1) UNRELEASED; urgency=medium
+gdm3 (47.0-1) UNRELEASED; urgency=medium
 
-  * New upstream release
+  [ Simon McVittie ]
+  * New upstream release candidate 47
   * d/rules: Explicitly enable X11 support.
     If upstream disables this in some future release, we'll want it to be
     an intentional decision whether we follow that.
@@ -14,7 +15,10 @@ gdm3 (47~rc-1) UNRELEASED; urgency=medium
   * Update Lintian overrides
   * d/control: Add ${gir:Provides} to libgdm-dev
 
- -- Simon McVittie <smcv@debian.org>  Fri, 13 Sep 2024 15:45:58 +0100
+  [ Marco Trevisan (Treviño) ]
+  * New upstream release 47.0
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 16 Sep 2024 15:59:34 +0200
 
 gdm3 (46.2-1) unstable; urgency=medium
 
