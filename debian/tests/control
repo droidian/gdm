@@ -4,6 +4,7 @@ Test-Command: sudo env
   bash debian/tests/sssd-gdm-smartcard-pam-auth-tester.sh
 Features: test-name=sssd-gdm-smartcard-auth-test
 Classes: desktop
+Architecture: !armel
 Depends: bash,
          gdm3,
          gnutls-bin,
