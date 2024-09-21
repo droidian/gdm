@@ -1,3 +1,11 @@
+gdm3 (47.0-3) unstable; urgency=medium
+
+  * Team upload
+  * d/tests/control: Don't test gdm3 on armel.
+    The library is available on armel, but the daemon is not.
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 21 Sep 2024 14:45:40 +0100
+
 gdm3 (47.0-2) unstable; urgency=medium
 
   * Release to unstable
