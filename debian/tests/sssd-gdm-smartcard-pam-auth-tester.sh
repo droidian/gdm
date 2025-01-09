@@ -256,3 +256,7 @@ test_authentication \
   "$tmpdir/softhsm2-test-sub-intermediate-CA-trusted-certificate-0001.conf" \
   "$tmpdir/test-sub-intermediate-CA.pem" \
   "partial_chain"
+
+! test_authentication \
+  "$tmpdir/softhsm2-test-sub-intermediate-CA-trusted-certificate-0001.conf" \
+  "$tmpdir/test-sub-intermediate-CA.pem"
