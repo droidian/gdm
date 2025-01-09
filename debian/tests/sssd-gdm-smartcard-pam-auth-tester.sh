@@ -38,7 +38,7 @@ for cmd in "${required_tools[@]}"; do
 done
 
 if [[ -v WAIT ]]; then
-  PIN=123456
+  PIN=${PIN:-123456}
 fi
 
 PIN=${PIN:-$RANDOM}
