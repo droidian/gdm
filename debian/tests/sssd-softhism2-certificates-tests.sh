@@ -175,12 +175,6 @@ copy_extensions  = copy
 [ usr_cert ]
 authorityKeyIdentifier = keyid, issuer
 
-[ v3_ca ]
-subjectKeyIdentifier   = hash
-authorityKeyIdentifier = keyid:always,issuer:always
-basicConstraints       = CA:true
-keyUsage               = critical, digitalSignature, cRLSign, keyCertSign
-
 [ v3_intermediate_ca ]
 subjectKeyIdentifier   = hash
 authorityKeyIdentifier = keyid:always,issuer:always
@@ -262,12 +256,6 @@ copy_extensions  = copy
 
 [ usr_cert ]
 authorityKeyIdentifier = keyid, issuer
-
-[ v3_ca ]
-subjectKeyIdentifier   = hash
-authorityKeyIdentifier = keyid:always,issuer:always
-basicConstraints       = CA:true
-keyUsage               = critical, digitalSignature, cRLSign, keyCertSign
 
 [ v3_intermediate_ca ]
 subjectKeyIdentifier   = hash
