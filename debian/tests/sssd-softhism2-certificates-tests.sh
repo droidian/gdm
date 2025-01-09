@@ -140,7 +140,8 @@ openssl genrsa -aes256 \
 openssl req -passin "$root_ca_key_pass" \
   -batch -config "$tmpdir/test-root-CA.config" -x509 -new -nodes \
   -key "$tmpdir/test-root-CA-key.pem" -sha256 -days 1024 -set_serial 0 \
-  -extensions v3_ca -out "$tmpdir/test-root-CA.pem"
+  -extensions v3_ca \
+  -out "$tmpdir/test-root-CA.pem"
 
 openssl x509 -noout -in "$tmpdir/test-root-CA.pem"
 
@@ -651,7 +652,7 @@ function check_certificate() {
     --pre -d 10 \
     --logger=stderr \
     --debug-fd=2 \
-    --module_name "$SOFTHSM2_MODULE" \
+    --module_name="$SOFTHSM2_MODULE" \
     "$verify_arg" \
     --${ca_db_arg}="$key_ring" > "$output_file" || return 2
 

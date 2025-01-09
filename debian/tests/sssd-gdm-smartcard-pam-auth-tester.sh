@@ -2,7 +2,12 @@
 # Copyright 2023 - Marco Trevisan
 # Released under the GPLv3 terms
 #
-# A simple tool to simulate PAM authentication using GDM smartcard settings
+# A simple tool to simulate PAM authentication using GDM smartcard settings.
+#
+# This can also be used in interactive mode to test GDM login from the UI, by
+# setting the environment variable `WAIT`, so that the script will restart the
+# gdm service and will allow the user to login it using its name and a provided
+# `PIN` (123456 by default).
 #
 # To be used with https://gist.github.com/3v1n0/287d02ca8e03936f1c7bba992173d47a
 set -xe
@@ -32,7 +37,10 @@ for cmd in "${required_tools[@]}"; do
   fi
 done
 
-PIN=${PIN:-123456}
+if [[ -v WAIT ]]; then
+  PIN=123456
+fi
+
 PIN=${PIN:-$RANDOM}
 GDM_USER=${GDM_USER:-gdm}
 tmpdir=${TEST_TMPDIR:-$(mktemp -d -t "sssd-softhsm2-gdm-certs-XXXXXX")}
@@ -131,15 +139,17 @@ bash "$tester"
 
 find "$tmpdir" -type d -exec chmod 777 {} \;
 find "$tmpdir" -type f -exec chmod 666 {} \;
-
-backup_file /etc/passwd
-backup_file /etc/shadow
-
+ 
 # Ensure that the test user has a non-trivial password. If it had a blank
 # password, then /etc/pam.d/gdm-smartcard-sssd-or-password would always
 # authenticate successfully
 if pamtester -v gdm-password "$SUDO_USER" authenticate </dev/null; then
-    ( echo -n "$SUDO_USER:"; cat /proc/sys/kernel/random/uuid ) | chpasswd
+    backup_file /etc/passwd
+    backup_file /etc/shadow
+    new_pass=$(cat /proc/sys/kernel/random/uuid)
+
+    echo "Temporarily $SUDO_USER password to '$new_pass'"
+    (echo -n "$SUDO_USER:"; echo -n "$new_pass") | chpasswd
 fi
 
 backup_file /etc/sssd/sssd.conf
@@ -215,7 +225,7 @@ EOF
     update-alternatives --set gdm-smartcard "$alternative" || return 2
 
     echo -n -e "$PIN" | runuser -u "$SUDO_USER" -- \
-      pamtester -v gdm-smartcard "$SUDO_USER" authenticate  || return 2
+      pamtester -v gdm-smartcard "$SUDO_USER" authenticate || return 2
     echo -n -e "$PIN" | runuser -u "$SUDO_USER" -- \
       pamtester -v gdm-smartcard "" authenticate  || return 2
 
@@ -247,6 +257,10 @@ EOF
 test_authentication \
   "$tmpdir/softhsm2-test-root-CA-trusted-certificate-0001.conf" \
   "$tmpdir/test-full-chain-CA.pem"
+
+if [[ -v WAIT ]] && ! [[ -v WAIT_ALL_TESTS ]]; then
+  exit $?
+fi
 
 test_authentication \
   "$tmpdir/softhsm2-test-sub-intermediate-CA-trusted-certificate-0001.conf" \
