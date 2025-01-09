@@ -20,7 +20,7 @@ for cmd in "${required_tools[@]}"; do
   fi
 done
 
-PIN=${PIN:-053350}
+PIN=${PIN:-$RANDOM}
 SOFTHSM2_MODULE=${SOFTHSM2_MODULE:-$(realpath "$(find /usr/lib/*softhsm/libsofthsm2.so | head -n 1)")}
 SSSD_P11_CHILD=${SSSD_P11_CHILD:-/usr/libexec/sssd/p11_child}
 TOKEN_ID=${TOKEN_ID:-00112233445566778899FFAABBCCDDEEFF012345}

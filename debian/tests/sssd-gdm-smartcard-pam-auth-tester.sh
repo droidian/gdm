@@ -33,6 +33,7 @@ for cmd in "${required_tools[@]}"; do
 done
 
 PIN=${PIN:-123456}
+PIN=${PIN:-$RANDOM}
 GDM_USER=${GDM_USER:-gdm}
 tmpdir=${TEST_TMPDIR:-$(mktemp -d -t "sssd-softhsm2-gdm-certs-XXXXXX")}
 backupsdir=
