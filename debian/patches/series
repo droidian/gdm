@@ -4,3 +4,4 @@
 92_systemd_unit.patch
 94_retain_xorg_log.patch
 debian/utils-gdm-auth-config-debian-Add-debian-hook-for-gdm-conf.patch
+schema-Add-banner-message-path-and-source-settings.patch

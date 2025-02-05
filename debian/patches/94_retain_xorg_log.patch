@@ -10,10 +10,10 @@ Origin: vendor, Debian
  1 file changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/daemon/gdm-server.c b/daemon/gdm-server.c
-index e9ed14c..9083f55 100644
+index 11bac24..39bf1ea 100644
 --- a/daemon/gdm-server.c
 +++ b/daemon/gdm-server.c
-@@ -235,12 +235,14 @@ gdm_server_init_command (GdmServer *server)
+@@ -237,12 +237,14 @@ gdm_server_init_command (GdmServer *server)
           * missing, or c) we are running for the main seat 'seat0'. */
  
  #ifdef ENABLE_SYSTEMD_JOURNAL
