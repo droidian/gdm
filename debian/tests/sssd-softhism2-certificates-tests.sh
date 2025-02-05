@@ -20,7 +20,7 @@ for cmd in "${required_tools[@]}"; do
   fi
 done
 
-PIN=${PIN:-053350}
+PIN=${PIN:-$RANDOM}
 SOFTHSM2_MODULE=${SOFTHSM2_MODULE:-$(realpath "$(find /usr/lib/*softhsm/libsofthsm2.so | head -n 1)")}
 SSSD_P11_CHILD=${SSSD_P11_CHILD:-/usr/libexec/sssd/p11_child}
 TOKEN_ID=${TOKEN_ID:-00112233445566778899FFAABBCCDDEEFF012345}
@@ -140,7 +140,8 @@ openssl genrsa -aes256 \
 openssl req -passin "$root_ca_key_pass" \
   -batch -config "$tmpdir/test-root-CA.config" -x509 -new -nodes \
   -key "$tmpdir/test-root-CA-key.pem" -sha256 -days 1024 -set_serial 0 \
-  -extensions v3_ca -out "$tmpdir/test-root-CA.pem"
+  -extensions v3_ca \
+  -out "$tmpdir/test-root-CA.pem"
 
 openssl x509 -noout -in "$tmpdir/test-root-CA.pem"
 
@@ -174,12 +175,6 @@ copy_extensions  = copy
 
 [ usr_cert ]
 authorityKeyIdentifier = keyid, issuer
-
-[ v3_ca ]
-subjectKeyIdentifier   = hash
-authorityKeyIdentifier = keyid:always,issuer:always
-basicConstraints       = CA:true
-keyUsage               = critical, digitalSignature, cRLSign, keyCertSign
 
 [ v3_intermediate_ca ]
 subjectKeyIdentifier   = hash
@@ -262,12 +257,6 @@ copy_extensions  = copy
 
 [ usr_cert ]
 authorityKeyIdentifier = keyid, issuer
-
-[ v3_ca ]
-subjectKeyIdentifier   = hash
-authorityKeyIdentifier = keyid:always,issuer:always
-basicConstraints       = CA:true
-keyUsage               = critical, digitalSignature, cRLSign, keyCertSign
 
 [ v3_intermediate_ca ]
 subjectKeyIdentifier   = hash
@@ -663,7 +652,7 @@ function check_certificate() {
     --pre -d 10 \
     --logger=stderr \
     --debug-fd=2 \
-    --module_name "$SOFTHSM2_MODULE" \
+    --module_name="$SOFTHSM2_MODULE" \
     "$verify_arg" \
     --${ca_db_arg}="$key_ring" > "$output_file" || return 2
 
