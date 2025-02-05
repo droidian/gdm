@@ -1,3 +1,13 @@
+gdm3 (47.0-5) UNRELEASED; urgency=medium
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/tests/sssd-softhism2-certificates-tests.sh: Remove unused v3_ca settings
+  * debian/tests/sssd-gdm: Use random PIN values by default
+  * d/tests/sssd-gdm-smartcard-pam-auth-tester.sh: Ensure auth fails with invalid cert
+  * debian/tests/sssd-gdm: Sync with upstream cleanups
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 05 Feb 2025 08:27:57 -0500
+
 gdm3 (47.0-4) unstable; urgency=medium
 
   * Cherry-pick gsettings schema addition required by GNOME Shell 48 Beta
