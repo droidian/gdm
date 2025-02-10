@@ -1,4 +1,4 @@
-gdm3 (47.0-5) UNRELEASED; urgency=medium
+gdm3 (48~beta-1) UNRELEASED; urgency=medium
 
   [ Marco Trevisan (Treviño) ]
   * debian/tests/sssd-softhism2-certificates-tests.sh: Remove unused v3_ca settings
@@ -6,7 +6,10 @@ gdm3 (47.0-5) UNRELEASED; urgency=medium
   * d/tests/sssd-gdm-smartcard-pam-auth-tester.sh: Ensure auth fails with invalid cert
   * debian/tests/sssd-gdm: Sync with upstream cleanups
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 05 Feb 2025 08:27:57 -0500
+  [ Jeremy Bícha ]
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 10 Feb 2025 10:41:14 -0500
 
 gdm3 (47.0-4) unstable; urgency=medium
 
