@@ -1,5 +1,5 @@
 project('gdm', 'c',
-  version: '48.0',
+  version: '49.alpha.0',
   license: 'GPL2+',
   meson_version: '>= 0.57',
 )
@@ -222,7 +222,7 @@ endif
 # dconf paths, we should fix dconf.pc to provide us more real data though
 if dconf_dep.found()
   dconf_prefix = dconf_dep.get_variable(pkgconfig: 'prefix')
-  dconf_sysconfig = (dconf_prefix == '/usr') ? '/etc' : dconf_prefix + '/etc/'
+  dconf_sysconfig = (dconf_prefix == '/usr') ? '/etc' : dconf_prefix + '/etc'
   dconf_datadir = dconf_prefix / 'share'
 else
   dconf_sysconfig = gdm_prefix / get_option('sysconfdir')
@@ -263,6 +263,7 @@ conf.set_quoted('GNOME_SETTINGS_DAEMON_DIR', gnome_settings_daemon_dir)
 conf.set_quoted('LANG_CONFIG_FILE', lang_config_file)
 conf.set_quoted('PAM_PROFILES_DIR', pam_profiles_dir[0] == '/' ? pam_profiles_dir : '/' + pam_profiles_dir)
 conf.set('HAVE_ADT', have_adt)
+conf.set('HAVE_LIBAUDIT', libaudit_dep.found())
 conf.set('HAVE_UTMP_H', have_utmp_header)
 conf.set('HAVE_UTMPX_H', have_utmpx_header)
 conf.set('HAVE_POSIX_GETPWNAM_R', have_posix_getpwnam_r)
