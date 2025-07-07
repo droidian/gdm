@@ -77,7 +77,6 @@ gdm_gnome_session_required_components = [
   'org.gnome.SettingsDaemon.Sharing',
   'org.gnome.SettingsDaemon.Smartcard',
   'org.gnome.SettingsDaemon.Sound',
-  'org.gnome.SettingsDaemon.Wacom',
 ]
 
 gdm_gnome_user_session_wanted_components = gdm_gnome_session_required_components
@@ -140,17 +139,6 @@ foreach _pam_filename : pam_data_files
     install_dir: pam_profiles_dir,
   )
 endforeach
-
-if have_x11_support
-  configure_file(
-    input: '61-gdm.rules.in',
-    output: '@BASENAME@',
-    configuration: {
-      'libexecdir': gdm_prefix / get_option('libexecdir'),
-    },
-    install_dir: udev_dir,
-  )
-endif
 
 # DBus service files
 service_config = configuration_data()
