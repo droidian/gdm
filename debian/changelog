@@ -1,3 +1,44 @@
+gdm3 (48.0-2) UNRELEASED; urgency=medium
+
+  * Team upload
+  * d/greeter.dconf-defaults: Remove non-functional theming options.
+    The visual design of the greeter (login prompt) is no longer intended
+    to be configurable, and in particular the background is no longer
+    configurable, so none of the background-related settings have any
+    effect. The greeter also does not use GTK, so changing the GTK
+    theme has no effect on it.
+    Remove these options from the default configuration file so that
+    they will not mislead sysadmins. (Closes: #1105057)
+  * d/greeter.dconf-defaults: Add some useful example options.
+    Disabling fingerprint authentication is one of the examples given
+    in the GNOME System Administration Guide. The steps from that guide
+    won't actually work as-is on Debian (because we use a different
+    username for the greeter, #1107944) but we can make it as easy as
+    possible to do the equivalent.
+    Meanwhile, disabling smartcard authentication is a way to avoid the
+    presence of a smartcard having the side-effect of disabling the user
+    list, and in some configurations also the ability to log in with a
+    password (#1051785).
+  * d/gdm3.alternatives: Make gdm-smartcard-sssd-or-password the default.
+    With the previous default, gdm-smartcard-sssd-exclusive, if a smart
+    card was plugged in and libpam-sss was installed, we would reject
+    attempts to log in with a password. This is the most-hardened choice
+    if smart cards are being used for authentication, but prevents login
+    if the smart card has not been enrolled for authentication and is
+    actually being used for some other purpose such as OpenPGP or X509.
+    (Closes: #1051785)
+  * d/greeter.dconf-defaults: Disable smartcard authentication by default.
+    Enabling smartcard authentication has side-effects on other aspects of
+    greeter behaviour if a compatible smartcard happens to be connected:
+    in particular, it disables the user list, resulting in users being
+    required to type their username to log in.
+    Enrolling smartcards to be used for authentication requires sysadmin
+    action, so it seems reasonable to require the sysadmin to take action
+    to enable it after they have done the necessary enrolment step.
+    (Closes: #1051785)
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 10 Jul 2025 14:47:45 +0100
+
 gdm3 (48.0-1) unstable; urgency=medium
 
   * New upstream release
