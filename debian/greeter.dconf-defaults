@@ -21,7 +21,7 @@ logo='/usr/share/images/vendor-logos/logo-text-version-64.png'
 # - Don't use a fingerprint reader for authentication
 # enable-fingerprint-authentication=false
 # - Don't use a smartcard reader for authentication
-# enable-smartcard-authentication=false
+enable-smartcard-authentication=false
 
 # Automatic suspend
 # =================
