@@ -1,4 +1,4 @@
-gdm3 (48.0-2) UNRELEASED; urgency=medium
+gdm3 (48.0-2) unstable; urgency=medium
 
   * Team upload
   * d/greeter.dconf-defaults: Remove non-functional theming options.
@@ -43,7 +43,7 @@ gdm3 (48.0-2) UNRELEASED; urgency=medium
     the forky cycle, but is a harmless change while we're uploading anyway.
     (Closes: #1096689)
 
- -- Simon McVittie <smcv@debian.org>  Sun, 13 Jul 2025 19:41:44 +0100
+ -- Simon McVittie <smcv@debian.org>  Sun, 13 Jul 2025 20:08:32 +0100
 
 gdm3 (48.0-1) unstable; urgency=medium
 
