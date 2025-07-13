@@ -19,7 +19,8 @@ gdm3 (48.0-2) UNRELEASED; urgency=medium
     presence of a smartcard having the side-effect of disabling the user
     list, and in some configurations also the ability to log in with a
     password (#1051785).
-  * d/gdm3.alternatives: Make gdm-smartcard-sssd-or-password the default.
+  * d/gdm3.alternatives: When smart card authentication is re-enabled,
+    make gdm-smartcard-sssd-or-password the default.
     With the previous default, gdm-smartcard-sssd-exclusive, if a smart
     card was plugged in and libpam-sss was installed, we would reject
     attempts to log in with a password. This is the most-hardened choice
@@ -36,8 +37,13 @@ gdm3 (48.0-2) UNRELEASED; urgency=medium
     action, so it seems reasonable to require the sysadmin to take action
     to enable it after they have done the necessary enrolment step.
     (Closes: #1051785)
+  * d/p/gdm-settings-utils-rename-variable-to-fix-build-with-gcc-.patch:
+    Add patch from upstream 49.alpha.0 to fix FTBFS in C23 mode.
+    This won't become relevant until gcc 15 becomes the default during
+    the forky cycle, but is a harmless change while we're uploading anyway.
+    (Closes: #1096689)
 
- -- Simon McVittie <smcv@debian.org>  Thu, 10 Jul 2025 14:47:45 +0100
+ -- Simon McVittie <smcv@debian.org>  Sun, 13 Jul 2025 19:41:44 +0100
 
 gdm3 (48.0-1) unstable; urgency=medium
 
