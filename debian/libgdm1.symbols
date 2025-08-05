@@ -47,8 +47,10 @@ libgdm.so.1 libgdm1 #MINVER#
  gdm_common_error_quark@Base 3.33.90
  gdm_find_display_session@Base 3.36.2
  gdm_generate_random_bytes@Base 3.33.90
+ gdm_get_grent_for_name@Base 49~beta
  gdm_get_login_window_session_id@Base 3.33.90
  gdm_get_pwent_for_name@Base 3.33.90
+ gdm_get_pwent_for_uid@Base 49~beta
  gdm_get_script_environment@Base 3.33.90
  gdm_get_session_ids@Base 3.8.3
  gdm_get_session_name_and_description@Base 3.8.3
