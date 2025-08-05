@@ -53,17 +53,14 @@ override_dh_auto_configure:
 		-Ddefault-path=/usr/local/bin:/usr/bin:/bin:/usr/games \
 		-Dcustom-conf=/etc/gdm3/daemon.conf \
 		-Dsysconfsubdir=gdm3 \
-		-Dworking-dir=/var/lib/gdm3 \
 		-Dxauth-dir=/run/gdm3 \
 		-Drun-dir=/run/gdm3 \
 		-Dpid-file=/run/gdm3.pid \
 		-Dlog-dir=/var/log/gdm3 \
 		-Dpam-mod-dir=/usr/lib/$(DEB_HOST_MULTIARCH)/security \
-		-Dscreenshot-dir=/run/gdm3/greeter \
 		-Ddefaults-conf=/usr/share/gdm/defaults.conf \
 		-Duser=Debian-gdm -Dgroup=Debian-gdm \
 		-Dlang-file=/etc/default/locale \
-		-Dran-once-marker-dir=/run/gdm3 \
 		-Dgnome-settings-daemon-dir="`pkg-config --variable=libexecdir gnome-settings-daemon`" \
 		-Dx11-support=true \
 		$(CONFFLAGS)
