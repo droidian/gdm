@@ -41,10 +41,6 @@ debian/%: debian/%.pod
 # We set this up manually
 override_dh_installsystemd:
 
-# Can be dropped in compat level 14
-execute_after_dh_installinit:
-	dh_installsysusers
-
 override_dh_auto_configure:
 	X_BIN="/usr/bin/Xorg" \
 	dh_auto_configure -- \
