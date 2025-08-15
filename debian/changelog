@@ -1,12 +1,9 @@
 gdm3 (48.0-3) UNRELEASED; urgency=medium
 
   [ Luca Boccassi ]
-  * Use sysusers.d file to create Debian-gdm user.
-    Leave the adduser dependency and the user/group deletion as-is in
-    the postrm, as it's pre-existing. It can be dropped later if no
-    longer needed.
-    Shipping a sysusers file allows to install usr-only images with
-    an ephemeral/factory reset/firstboot /etc/. (Closes: #1107682)
+  * Use a sysusers.d file to create the Debian-gdm user.
+    This allows /usr-only images with an ephemeral/factory reset/firstboot
+    /etc/. (Closes: #1107682)
 
   [ Simon McVittie ]
   * Build-depend on gir1.2-*-dev instead of libgirepository1.0-dev.
@@ -14,10 +11,16 @@ gdm3 (48.0-3) UNRELEASED; urgency=medium
     phased out during the forky release cycle.
   * Activate dh_installsysusers declaratively rather than imperatively.
     This lets debhelper choose a good point in the sequence for it.
+  * d/gdm3.postrm, d/control: Don't delete system user/group during purge.
+    In previous discussions like #1006912 there seems to be consensus
+    that removing uids is dangerous because there might still be files
+    owned by that uid on the filesystem, causing unintended access to be
+    granted if the uid is subsequently reused for a different system user.
+    This also means we can drop the adduser dependency.
   * d/copyright: Don't quote the FSF's former postal address
   * Standards-Version: 4.7.2 (no changes required)
 
- -- Simon McVittie <smcv@debian.org>  Fri, 15 Aug 2025 00:53:43 +0100
+ -- Simon McVittie <smcv@debian.org>  Fri, 15 Aug 2025 01:12:08 +0100
 
 gdm3 (48.0-2) unstable; urgency=medium
 
