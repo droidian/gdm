@@ -13,6 +13,9 @@ export udevdir = $(shell pkgconf --variable=udevdir udev | sed s,^/,,)
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,-z,defs
 
+# https://bugs.debian.org/1060838, https://bugs.debian.org/1111001
+export MESON_USE_NEW_CROSSGEN=1
+
 ifeq (linux,$(DEB_HOST_ARCH_OS))
 CONFFLAGS += \
 	-Dselinux=enabled \
