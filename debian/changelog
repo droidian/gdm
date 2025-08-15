@@ -1,4 +1,6 @@
-gdm3 (48.0-3) UNRELEASED; urgency=medium
+gdm3 (48.0-3) unstable; urgency=medium
+
+  * Team upload
 
   [ Luca Boccassi ]
   * Use a sysusers.d file to create the Debian-gdm user.
@@ -6,9 +8,6 @@ gdm3 (48.0-3) UNRELEASED; urgency=medium
     /etc/. (Closes: #1107682)
 
   [ Simon McVittie ]
-  * Build-depend on gir1.2-*-dev instead of libgirepository1.0-dev.
-    libgirepository1.0-dev is not Multi-Arch co-installable and should be
-    phased out during the forky release cycle.
   * Activate dh_installsysusers declaratively rather than imperatively.
     This lets debhelper choose a good point in the sequence for it.
   * d/gdm3.postrm, d/control: Don't delete system user/group during purge.
@@ -17,10 +16,19 @@ gdm3 (48.0-3) UNRELEASED; urgency=medium
     owned by that uid on the filesystem, causing unintended access to be
     granted if the uid is subsequently reused for a different system user.
     This also means we can drop the adduser dependency.
+  * Build-depend on gir1.2-*-dev instead of libgirepository1.0-dev.
+    libgirepository1.0-dev is not Multi-Arch co-installable and should be
+    phased out during the forky release cycle.
+  * d/control, d/rules: Let the package be cross-compiled.
+    debhelper currently uses debcrossgen which does not support cross
+    GObject-Introspection, so for now we need to opt-in to using
+    `meson env2mfile` instead.
+    We need to run dconf-cli from the build architecture, since we will
+    be unable to run it from the host architecture in general.
   * d/copyright: Don't quote the FSF's former postal address
   * Standards-Version: 4.7.2 (no changes required)
 
- -- Simon McVittie <smcv@debian.org>  Fri, 15 Aug 2025 01:12:08 +0100
+ -- Simon McVittie <smcv@debian.org>  Fri, 15 Aug 2025 10:53:47 +0100
 
 gdm3 (48.0-2) unstable; urgency=medium
 
