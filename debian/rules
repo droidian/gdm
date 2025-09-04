@@ -53,6 +53,7 @@ override_dh_auto_configure:
 		-Ddefault-path=/usr/local/bin:/usr/bin:/bin:/usr/games \
 		-Dcustom-conf=/etc/gdm3/daemon.conf \
 		-Dsysconfsubdir=gdm3 \
+		-Dworking-dir=/var/lib/gdm3 \
 		-Dxauth-dir=/run/gdm3 \
 		-Drun-dir=/run/gdm3 \
 		-Dpid-file=/run/gdm3.pid \
