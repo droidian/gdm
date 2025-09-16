@@ -1,5 +1,5 @@
 project('gdm', 'c',
-  version: '48.0',
+  version: '49.0.1',
   license: 'GPL2+',
   meson_version: '>= 0.57',
 )
@@ -29,14 +29,13 @@ dbus_sys_dir = (get_option('dbus-sys') != '')? get_option('dbus-sys') : get_opti
 gdm_defaults_conf = (get_option('defaults-conf') != '')? get_option('defaults-conf') : gdm_prefix / gdm_datadir / 'defaults.conf'
 gdm_custom_conf = (get_option('custom-conf') != '')? get_option('custom-conf') : gdmconfdir / 'custom.conf'
 gnome_settings_daemon_dir = (get_option('gnome-settings-daemon-dir') != '')? get_option('gnome-settings-daemon-dir') : gdm_prefix / get_option('libexecdir')
-gdm_run_dir = (get_option('run-dir') != '')? get_option('run-dir') : gdm_prefix / get_option('localstatedir') / 'run' / 'gdm'
+gdm_run_dir = (get_option('run-dir') != '')? get_option('run-dir') : '/run/gdm'
 gdm_runtime_conf = (get_option('runtime-conf') != '')? get_option('runtime-conf') : gdm_run_dir / 'custom.conf'
 gdm_pid_file = (get_option('pid-file') != '')? get_option('pid-file') : gdm_run_dir / 'gdm.pid'
-ran_once_marker_dir = (get_option('ran-once-marker-dir') != '')? get_option('ran-once-marker-dir') : gdm_run_dir
 working_dir = (get_option('working-dir') != '')? get_option('working-dir') : gdm_prefix / get_option('localstatedir') / 'lib' / 'gdm'
-gdm_xauth_dir = (get_option('xauth-dir') != '')? get_option('xauth-dir') : gdm_run_dir
-gdm_screenshot_dir = (get_option('screenshot-dir') != '')? get_option('screenshot-dir') : gdm_run_dir / 'greeter'
+gdm_xauth_dir = (get_option('xauth-dir') != '')? get_option('xauth-dir') : gdm_run_dir / 'xauth'
 gdm_private_dbus_dir = (get_option('private-dbus-dir') != '')? get_option('private-dbus-dir') : gdm_run_dir / 'dbus'
+gdm_dyn_home_dir = (get_option('dyn-home-dir') != '')? get_option('dyn-home-dir') : gdm_run_dir / 'home'
 pam_prefix = (get_option('pam-prefix') != '')? get_option('pam-prefix') : get_option('sysconfdir')
 pam_profiles_dir = pam_prefix / 'pam.d'
 have_x11_support = get_option('x11-support')
@@ -136,11 +135,24 @@ if logind_provider == 'systemd'
       '/usr/lib/systemd',
     ])
   systemd_x_server = systemd_multiseat_x.found()? systemd_multiseat_x.path() : '/lib/systemd/systemd-multi-seat-x'
+
+  have_userdb = libsystemd_dep.version().version_compare('>= 257')
+
+  # Our range is documented at https://systemd.io/UIDS-GIDS/
+  greeter_uid_min = systemd_dep.get_variable('greeter_uid_min', default_value: '60578')
+  greeter_uid_max = systemd_dep.get_variable('greeter_uid_max', default_value: '60705')
 else
   elogind_dep = dependency('libelogind')
   logind_dep = elogind_dep
   systemd_x_server = 'disabled'
+  have_userdb = false
+  greeter_uid_min = 0
+  greeter_uid_max = 0
 endif
+
+nologin_program = find_program('nologin', required: false)
+nologin_path = nologin_program.found()? nologin_program.path() : '/sbin/nologin'
+
 # Plymouth
 plymouth_dep = dependency('ply-boot-client', required: get_option('plymouth'))
 # Check for Solaris auditing API (ADT)
@@ -222,7 +234,7 @@ endif
 # dconf paths, we should fix dconf.pc to provide us more real data though
 if dconf_dep.found()
   dconf_prefix = dconf_dep.get_variable(pkgconfig: 'prefix')
-  dconf_sysconfig = (dconf_prefix == '/usr') ? '/etc' : dconf_prefix + '/etc/'
+  dconf_sysconfig = (dconf_prefix == '/usr') ? '/etc' : dconf_prefix + '/etc'
   dconf_datadir = dconf_prefix / 'share'
 else
   dconf_sysconfig = gdm_prefix / get_option('sysconfdir')
@@ -249,10 +261,8 @@ conf.set_quoted('DCONF_SYSCONFIG', dconf_sysconfig)
 conf.set_quoted('DCONF_PROFILES_PATH', dconf_profiles_path)
 conf.set_quoted('GDMCONFDIR', gdmconfdir)
 conf.set_quoted('GDM_DATADIR', gdm_prefix / gdm_datadir)
-conf.set_quoted('GDM_SCREENSHOT_DIR', gdm_screenshot_dir)
 conf.set_quoted('GDM_XAUTH_DIR', gdm_xauth_dir)
 conf.set_quoted('GDM_PRIVATE_DBUS_DIR', gdm_private_dbus_dir)
-conf.set_quoted('GDM_RAN_ONCE_MARKER_DIR', ran_once_marker_dir)
 conf.set_quoted('GDM_RUN_DIR', gdm_run_dir)
 conf.set_quoted('GDM_DCONF_PROFILE', 'gdm')
 conf.set_quoted('GDM_WORKING_DIR', working_dir)
@@ -263,6 +273,7 @@ conf.set_quoted('GNOME_SETTINGS_DAEMON_DIR', gnome_settings_daemon_dir)
 conf.set_quoted('LANG_CONFIG_FILE', lang_config_file)
 conf.set_quoted('PAM_PROFILES_DIR', pam_profiles_dir[0] == '/' ? pam_profiles_dir : '/' + pam_profiles_dir)
 conf.set('HAVE_ADT', have_adt)
+conf.set('HAVE_LIBAUDIT', libaudit_dep.found())
 conf.set('HAVE_UTMP_H', have_utmp_header)
 conf.set('HAVE_UTMPX_H', have_utmpx_header)
 conf.set('HAVE_POSIX_GETPWNAM_R', have_posix_getpwnam_r)
@@ -292,6 +303,11 @@ conf.set_quoted('GDM_USERNAME', get_option('user'))
 conf.set_quoted('GDM_GROUPNAME', get_option('group'))
 conf.set('HAVE_LIBXDMCP', have_xdmcp)
 conf.set_quoted('SYSTEMD_X_SERVER', systemd_x_server)
+conf.set('HAVE_USERDB', have_userdb)
+conf.set('GREETER_UID_MIN', greeter_uid_min)
+conf.set('GREETER_UID_MAX', greeter_uid_max)
+conf.set_quoted('GDM_DYN_HOME_DIR', gdm_dyn_home_dir)
+conf.set_quoted('NOLOGIN_PATH', nologin_path)
 conf.set('WITH_PLYMOUTH', plymouth_dep.found())
 conf.set_quoted('X_SERVER', x_bin)
 conf.set_quoted('X_PATH', x_path)
@@ -343,10 +359,9 @@ summary({
     'System DBus': dbus_sys_dir,
     'DM conf': dmconfdir,
     'GDM conf': gdmconfdir,
-    'GDM Screenshot ': gdm_screenshot_dir,
     'GDM Xauth': gdm_xauth_dir,
-    'GDM RanOnceMarker': ran_once_marker_dir,
     'GDM Run': gdm_run_dir,
+    'GDM Dynamic Homes': gdm_dyn_home_dir,
     'GDM PID file': gdm_pid_file,
     'GDM Defaults config': gdm_defaults_conf,
     'GDM Custom config': gdm_custom_conf,

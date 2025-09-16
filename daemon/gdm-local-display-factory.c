@@ -50,7 +50,8 @@
 #define GDM_LOCAL_DISPLAY_FACTORY_DBUS_PATH GDM_DBUS_PATH "/LocalDisplayFactory"
 #define GDM_MANAGER_DBUS_NAME               "org.gnome.DisplayManager.LocalDisplayFactory"
 
-#define MAX_DISPLAY_FAILURES 5
+#define MAX_DISPLAY_FAILURES 10
+#define N_FAILURES_UNTIL_FALLBACK 5
 #define WAIT_TO_FINISH_TIMEOUT 10 /* seconds */
 #define SEAT0_GRAPHICS_CHECK_TIMEOUT 10 /* seconds */
 
@@ -94,6 +95,13 @@ struct _GdmLocalDisplayFactory
 enum {
         PROP_0,
 };
+
+enum {
+        GRAPHICS_UNSUPPORTED,
+        LAST_SIGNAL,
+};
+
+static guint signals [LAST_SIGNAL] = { 0 };
 
 static void     gdm_local_display_factory_class_init    (GdmLocalDisplayFactoryClass *klass);
 static void     gdm_local_display_factory_init          (GdmLocalDisplayFactory      *factory);
@@ -732,7 +740,7 @@ udev_is_settled (GdmLocalDisplayFactory *factory)
                 g_autoptr (GUdevDevice) platform_device = NULL;
                 g_autoptr (GUdevDevice) pci_device = NULL;
 
-                if (g_str_has_prefix (id_path, "platform-simple-framebuffer")) {
+                if (g_strrstr (id_path, "platform-simple-framebuffer") != NULL) {
                         node = next_node;
                         continue;
                 }
@@ -881,7 +889,7 @@ ensure_display_for_seat (GdmLocalDisplayFactory *factory,
 
         is_seat0 = g_strcmp0 (seat_id, "seat0") == 0;
 
-        falling_back = factory->num_failures > 0;
+        falling_back = factory->num_failures > N_FAILURES_UNTIL_FALLBACK;
         session_types = gdm_local_display_factory_get_session_types (factory, falling_back);
 
         if (session_types == NULL) {
@@ -936,8 +944,11 @@ ensure_display_for_seat (GdmLocalDisplayFactory *factory,
                 }
         }
 
-        if (!seat_supports_graphics)
+        if (!seat_supports_graphics) {
+                if (is_seat0)
+                        g_signal_emit (factory, signals[GRAPHICS_UNSUPPORTED], 0);
                 return;
+        }
 
         g_assert (session_types != NULL);
 
@@ -1675,6 +1686,17 @@ gdm_local_display_factory_class_init (GdmLocalDisplayFactoryClass *klass)
 
         factory_class->start = gdm_local_display_factory_start;
         factory_class->stop = gdm_local_display_factory_stop;
+
+        signals [GRAPHICS_UNSUPPORTED] =
+                g_signal_new ("graphics-unsupported",
+                              G_OBJECT_CLASS_TYPE (object_class),
+                              G_SIGNAL_RUN_FIRST,
+                              0,
+                              NULL,
+                              NULL,
+                              NULL,
+                              G_TYPE_NONE,
+                              0);
 }
 
 static void

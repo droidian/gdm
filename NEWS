@@ -1,3 +1,82 @@
+49.0.1
+==========
+
+* Follow-up for permissions issue fix, making the fix work in more environments
+
+49.0
+==========
+
+* Translation updates
+* Fix build failures when built without plymouth support
+* Fix permissions issue on the GDM work dir (/var/lib/gdm) that broke settings
+  persistence
+
+49.rc
+==========
+
+* Translation updates
+* Fixed a bug in PAM config files, introduced by transition to dynamic users
+* Added logic to retry preferred display server (usually Wayland) before falling
+  back (usually to X11)
+* Fixed a bug where Plymouth keeps running if not display is plugged into the
+  system. This would prevent bootup from completing and would prevent the user
+  from logging in on a serial console
+* Fixed GDM's session file loading logic to search directories in correct
+  precedence order
+* Fix simpledrm device detection to match the kernel's new device naming scheme
+* Re-enabled X11 support by default. We found it difficult to cleanly separate
+  GDM's ability to launch modern X11 sessions (which we intended to keep enabled
+  in GNOME 49) from the rest of GDM's X11 integration (which we intended to
+  disable but leave intact for GNOME 49). We still plan to remove GDM's full
+  X11 integration in a future version, and leave only the ability to launch
+  modern X11 sessions.
+* Worked around a regression introduced by the switch to dynamic users, where
+  the login screen no longer persists any settings
+
+49.beta
+==========
+
+* Translation updates
+* Switch to using dynamic users for greeter sessions. This enables systemd-based
+  session management on the greeter, removes GDM's dependency on dbus-daemon,
+  and frees us to drop gnome-session's builtin service manager.
+* Adapt to changes in gnome-session 49, which dropped the builtin service manager
+  code and now exclusively relies on systemd for session startup. This means that
+  GDM now depends on gnome-session 49.
+
+49.alpha.1
+==========
+
+* Drop dependency on Wacom g-s-d plugin  [Jordan; !301]
+* Drop leftover udev rules  [Alessandro; !299]
+* Fix warning when building without libxdmcp support  [Florian; !300]
+* Add polkit rules to allow access to smartcards [David, !287]
+* Misc [Joan; !298]
+
+Contributors:
+  Alessandro Astone, David Härdeman, Joan Torres López,
+  Florian Müllner, Jordan Petridis
+
+Translators:
+  Takayuki Kusano [ja], Aefgh Threenine [th]
+
+==================
+Version 49.alpha.0
+==================
+- meson: Change x11-support default value to false
+- Disable Xorg session by default
+- udev: Drop disable_wayland overrides
+- Fix build with gcc 15
+- Translation updates
+
+Contributors:
+  Zbigniew Jędrzejewski-Szmek, Florian Müllner, Jordan Petridis,
+  Ray Strode, Joan Torres, Adrian Vovk, Alynx Zhou
+
+Translators:
+  Antonio Marin [ro], Baxrom Raxmatov [uz], Cheng-Chia Tseng [zh_TW],
+  Andi Chandler [en_GB], Peter Mráz [sk], Rūdolfs Mazurs [lv]
+
 =======
 Version 48.0
 =======
