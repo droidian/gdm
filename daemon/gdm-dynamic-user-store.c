@@ -35,6 +35,7 @@ G_STATIC_ASSERT (sizeof(uid_t) == sizeof(guint));
 #define GDM_SERVICE_ID "org.gnome.DisplayManager"
 #define GREETER_UID_COUNT ((size_t)(GREETER_UID_MAX - GREETER_UID_MIN) + 1)
 #define GID_NOBODY ((gid_t) 65534)
+#define UID_INVALID ((uid_t) -1)
 
 #define USERDB_SOCKET_DIR "/run/systemd/userdb"
 
@@ -130,8 +131,10 @@ dynamic_user_free (DynamicUser *user)
                  user->username, user->uid);
 
         /* Sanity checks, let's not nuke the system by accident */
-        g_assert (g_strcmp0 (user->home, "/") != 0);
-        g_assert (!g_str_has_prefix (user->home, "/home"));
+        if (g_strcmp0 (user->home, "/") == 0 ||
+            g_str_has_prefix (user->home, "/home")) {
+                g_error ("GdmDynUserStore: Dynamic user home '%s' is in /home or is root! Aborting.", user->home);
+        }
 
         home = g_file_new_for_path (user->home);
         if (!gdm_rm_recursively (home, &error))
@@ -461,7 +464,9 @@ vl_get_user_record (sd_varlink                *call,
 
         GWeakRef *weak_store = userdata;
         g_autoptr (GdmDynamicUserStore) store = NULL;
-        GetUserRecordParams params = {};
+        GetUserRecordParams params = {
+                .uid = UID_INVALID,
+        };
         g_autoptr (sd_json_variant) ret = NULL;
         DynamicUser *found = NULL;
         int r;
@@ -481,7 +486,7 @@ vl_get_user_record (sd_varlink                *call,
 
         G_MUTEX_AUTO_LOCK (&store->mutex, locker);
 
-        if (params.uid != 0)
+        if (params.uid != UID_INVALID)
                 found = g_hash_table_lookup (store->by_uid, &params.uid);
         else if (params.username != NULL)
                 found = g_hash_table_lookup (store->by_name, params.username);
@@ -515,7 +520,7 @@ vl_get_user_record (sd_varlink                *call,
                                          "io.systemd.UserDatabase.NoRecordFound",
                                          NULL);
 
-        if ((params.uid != 0 && params.uid != found->uid) ||
+        if ((params.uid != UID_INVALID && params.uid != found->uid) ||
             (params.username != NULL && g_strcmp0 (params.username, found->username) != 0))
                 return sd_varlink_error (call,
                                          "io.systemd.UserDatabase.ConflictingRecordFound",
