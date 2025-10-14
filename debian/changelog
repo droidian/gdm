@@ -1,8 +1,13 @@
 gdm3 (49.1-1) UNRELEASED; urgency=medium
 
+  [ Simon McVittie ]
   * New upstream bugfix release
 
- -- Simon McVittie <smcv@debian.org>  Tue, 14 Oct 2025 10:17:18 +0100
+  [ Luca Boccassi ]
+  * Do not patch out display-manager.service alias from .service file
+    (Closes: #1025349)
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 14 Oct 2025 10:26:26 +0100
 
 gdm3 (49.0.1-1) experimental; urgency=medium
 
