@@ -1,3 +1,18 @@
+gdm3 (49.1-2) experimental; urgency=medium
+
+  * Team upload
+  * d/control: Depend on a version of libnss-systemd with #1118640 fixed.
+    Otherwise, looking up the gdm-greeter* dynamic users in shadow/gshadow
+    will not work on systems that were installed as Debian 11 or older,
+    and then upgraded. (Closes: #1116563, #1118454) (LP: #2121017)
+  * d/greeter.dconf-defaults: Improve documentation a bit
+  * d/greeter.dconf-defaults: Mention the accent colour option.
+    When we reach the forky freeze and background/branding images become
+    available in desktop-base, we might want to set this to a coordinating
+    colour (see #1105056). Until then, leave the default commented-out.
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 27 Oct 2025 15:18:06 +0000
+
 gdm3 (49.1-1) experimental; urgency=medium
 
   * Team upload
