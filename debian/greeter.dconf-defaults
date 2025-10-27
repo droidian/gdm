@@ -38,3 +38,10 @@ enable-smartcard-authentication=false
 # - As above but when on battery
 # sleep-inactive-battery-timeout=1200
 # sleep-inactive-battery-type='suspend'
+
+# Appearance
+# ==========
+[org/gnome/desktop/interface]
+# See /usr/share/glib-2.0/schemas/org.gnome.desktop.interface.gschema.xml
+# - Accent color for UI widgets, could be chosen to match distro branding
+# accent-color='blue'
