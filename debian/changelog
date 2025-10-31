@@ -1,3 +1,14 @@
+gdm3 (49.1-5) unstable; urgency=medium
+
+  * Team upload
+  * d/control: Increase gnome-session-{bin,common} dependency to 49.
+    The new version of gdm doesn't start successfully with the old
+    gnome-session. The new gnome-session-bin already Breaks the older
+    gdm3, but the new gdm3 didn't yet force installation of the new
+    gnome-session. (Closes: #1119809)
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 31 Oct 2025 18:12:04 +0000
+
 gdm3 (49.1-4) unstable; urgency=medium
 
   * Team upload
