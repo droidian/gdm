@@ -1,3 +1,20 @@
+gdm3 (49.1-6) unstable; urgency=medium
+
+  * Team upload
+  * d/Xsession, d/gdm3.install, d/rules:
+    Restore ability to launch X11 sessions.
+    Version 49.0.1-1 removed the example of a non-package-manager-provided
+    X11 session, but also removed the ability to launch X11 sessions
+    at all: all sessions that do not have X-GDM-BypassXsession
+    in their .desktop file require an Xsession script, which was
+    historically provided by Debian rather than by upstream. Restore
+    that functionality.
+    In a future upload we should look at whether we can use
+    /etc/X11/Xsession as-is, but let's get the GNOME 49 transition
+    done first.
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 31 Oct 2025 19:13:51 +0000
+
 gdm3 (49.1-5) unstable; urgency=medium
 
   * Team upload
