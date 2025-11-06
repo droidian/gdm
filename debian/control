@@ -80,7 +80,6 @@ Recommends: at-spi2-core,
             desktop-base (>= 10.0.0),
             gnome-session | x-session-manager,
             x11-xkb-utils,
-            xserver-xephyr,
             xserver-xorg,
             zenity
 Suggests: orca,
