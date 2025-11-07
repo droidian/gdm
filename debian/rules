@@ -55,6 +55,7 @@ override_dh_auto_configure:
 		-Dsysconfsubdir=gdm3 \
 		-Dworking-dir=/var/lib/gdm3 \
 		-Dxauth-dir=/run/gdm3 \
+		-Dxdmcp=disabled \
 		-Drun-dir=/run/gdm3 \
 		-Dpid-file=/run/gdm3.pid \
 		-Dlog-dir=/var/log/gdm3 \
