@@ -1,8 +1,8 @@
 From: Nathan Pratta Teodosio <nteodosio@ubuntu.com>
 Date: Fri, 27 Sep 2024 13:49:48 +0200
-Subject: If /etc/X11/Xresources is a regular file
+Subject: If /etc/X11/Xresources is a directory
 
-instead of a directory, load /etc/X11/Xresources/*
+instead of a regular file, load /etc/X11/Xresources/*
 into the X resource database
 
 Bug-Ubuntu: https://launchpad.net/bugs/1955850
