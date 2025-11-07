@@ -1,0 +1,35 @@
+From: Martin Pitt <martin.pitt@ubuntu.com>
+Date: Tue, 7 Aug 2018 11:15:56 +0100
+Subject: Run /etc/X11/Xsession.d/
+
+/etc/X11/Xsession.d is a Debianism/Ubuntuism
+
+Forwarded: not-needed
+---
+ data/Xsession.in | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/data/Xsession.in b/data/Xsession.in
+index 7b55dda..b0dc589 100755
+--- a/data/Xsession.in
++++ b/data/Xsession.in
+@@ -189,6 +189,19 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
+     done
+ fi
+ 
++# run /etc/X11/Xsession.d/
++OPTIONFILE=/etc/X11/Xsession.options
++USERXSESSION=$HOME/.xsession
++USERXSESSIONRC=$HOME/.xsessionrc
++ALTUSERXSESSION=$HOME/.Xsession
++if [ -d /etc/X11/Xsession.d ]; then
++    for i in `ls /etc/X11/Xsession.d/` ; do
++        if [ -r "/etc/X11/Xsession.d/$i"  -a -f "/etc/X11/Xsession.d/$i" ] && expr "$i" : '^[[:alnum:]_-]\+$' > /dev/null; then
++	    . "/etc/X11/Xsession.d/$i"
++        fi
++    done
++fi
++
+ if [ "x$command" = "xdefault" ] ; then
+   if [ -x "$HOME/.Xclients" ]; then
+     command="$HOME/.Xclients"
