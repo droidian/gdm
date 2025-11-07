@@ -61,6 +61,7 @@ override_dh_auto_configure:
 		-Dlog-dir=/var/log/gdm3 \
 		-Dpam-mod-dir=/usr/lib/$(DEB_HOST_MULTIARCH)/security \
 		-Ddefaults-conf=/usr/share/gdm/defaults.conf \
+		-Dgdm-xsession=true \
 		-Duser=Debian-gdm -Dgroup=Debian-gdm \
 		-Dlang-file=/etc/default/locale \
 		-Dgnome-settings-daemon-dir="`pkg-config --variable=libexecdir gnome-settings-daemon`" \
@@ -74,7 +75,6 @@ override_dh_install:
 	dh_install
 ifneq ($(filter gdm3,$(built_binaries)),)
 	mv debian/gdm3/usr/sbin/gdm debian/gdm3/usr/sbin/gdm3
-	chmod 755 debian/gdm3/etc/gdm3/Xsession
 	chmod 755 debian/gdm3/usr/share/gdm/generate-config
 	dh_installpam -pgdm3 --name=gdm-autologin
 	dh_installpam -pgdm3 --name=gdm-launch-environment
