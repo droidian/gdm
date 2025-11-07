@@ -1,0 +1,44 @@
+From: Dmitry Borodaenko <angdraug@debian.org>
+Date: Mon, 12 Oct 2020 11:11:26 -0700
+Subject: Implement has_option in Xsession
+
+Now that x11-common moved this function from 20x11-common_process-args
+to Xsession (see #920778), gdm's version of Xsession also has to
+implement it.
+
+https://bugs.debian.org/972108
+
+Forwarded: not-needed
+---
+ data/Xsession.in | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/data/Xsession.in b/data/Xsession.in
+index 2e4de4f..7b55dda 100755
+--- a/data/Xsession.in
++++ b/data/Xsession.in
+@@ -215,6 +215,24 @@ elif [ -z "$sshagent" ] ; then
+     echo "$0: ssh-agent not found!"
+ fi
+ 
++OPTIONS="$(
++  if [ -r "$OPTIONFILE" ]; then
++    cat "$OPTIONFILE"
++  fi
++  if [ -d /etc/X11/Xsession.options.d ]; then
++    run-parts --list --regex '\.conf$' /etc/X11/Xsession.options.d
++  fi
++)"
++
++has_option() {
++  # Ensure that a later no-foo overrides an earlier foo
++  if [ "$(echo "$OPTIONS" | grep -Eo "^(no-)?$1\>" | tail -n 1)" = "$1" ]; then
++    return 0
++  else
++    return 1
++  fi
++}
++
+ echo "$0: Setup done, will execute: $command"
+ 
+ eval exec $command
