@@ -7,3 +7,4 @@ debian/implement-has_option-in-Xsession.patch
 debian/run_xsession.d.patch
 debian/utils-gdm-auth-config-debian-Add-debian-hook-for-gdm-conf.patch
 debian/x-terminal-emulator.patch
+debian/xresources_is_a_dir.patch
