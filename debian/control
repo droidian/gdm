@@ -138,8 +138,6 @@ Section: introspection
 Architecture: linux-any
 Depends: ${gir:Depends},
          ${misc:Depends}
-Conflicts: gir1.2-gdm3
-Replaces: gir1.2-gdm3
 Description: GObject introspection data for the GNOME Display Manager
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
