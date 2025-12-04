@@ -12,6 +12,7 @@ export udevdir = $(shell pkgconf --variable=udevdir udev | sed s,^/,,)
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,-z,defs
+export DPKG_GENSYMBOLS_CHECK_LEVEL = 4
 
 # https://bugs.debian.org/1060838, https://bugs.debian.org/1111001
 export MESON_USE_NEW_CROSSGEN=1
@@ -71,8 +72,7 @@ override_dh_auto_configure:
 override_dh_auto_build: $(OUTFILES) $(MANPAGES)
 	dh_auto_build
 
-override_dh_install:
-	dh_install
+execute_after_dh_install:
 ifneq ($(filter gdm3,$(built_binaries)),)
 	mv debian/gdm3/usr/sbin/gdm debian/gdm3/usr/sbin/gdm3
 	chmod 755 debian/gdm3/usr/share/gdm/generate-config
@@ -85,19 +85,10 @@ ifneq ($(filter gdm3,$(built_binaries)),)
 	dh_installpam -pgdm3 --name=gdm-smartcard-pkcs11-exclusive
 endif
 
-override_dh_missing:
-	dh_missing --fail-missing
-
-override_dh_makeshlibs:
-	dh_makeshlibs -- -c4
-
 override_dh_installinit:
 	dh_installinit --noscripts
 
-override_dh_auto_clean:
-	dh_auto_clean
+execute_after_dh_auto_clean:
 	rm -f $(MANPAGES)
 	rm -f $(OUTFILES)
 	rm -f data/gdm.schemas data/61-gdm.rules
-
-override_dh_gnome_clean:
