@@ -1,3 +1,13 @@
+gdm3 (49.2-2) unstable; urgency=medium
+
+  [ Alessandro Astone ]
+  * d/control: Remove obsolete dependency on dbus-daemon
+
+  [ Jeremy Bícha ]
+  * Remove support for DEB_BUILD_OPTIONS=debug
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 03 Dec 2025 22:34:05 -0500
+
 gdm3 (49.2-1) unstable; urgency=medium
 
   * New upstream release
