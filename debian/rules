@@ -27,10 +27,6 @@ CONFFLAGS += \
 	-Dselinux=disabled
 endif
 
-ifneq (,$(filter debug,$(DEB_BUILD_OPTIONS)))
-CONFFLAGS += --buildtype=debug
-endif
-
 pod2man := pod2man --release="GNOME $(DEB_GNOME_VERSION)" --center="Debian GNU/Linux"
 PODFILES := $(wildcard debian/*.pod)
 MANPAGES := $(patsubst %.pod,%,$(PODFILES))
