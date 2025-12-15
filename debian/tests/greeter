@@ -1,0 +1,54 @@
+#!/bin/bash
+
+DBUS_LOG="${AUTOPKGTEST_ARTIFACTS}/dbus-log"
+JOURNAL_LOG="${AUTOPKGTEST_ARTIFACTS}/journal"
+GDM_CFG_FILE=/etc/gdm3/daemon.conf
+if dpkg-vendor --is Ubuntu; then
+    GDM_CFG_FILE=/etc/gdm3/custom.conf
+fi
+
+trap log EXIT
+
+# shellcheck disable=SC2317
+log() {
+    journalctl -b > "$JOURNAL_LOG"
+}
+
+count_calls() {
+    method="$1"
+    awk "\$1 == \"mc\" && \$8 == \"$method\"" < "$DBUS_LOG" | wc -l
+}
+
+check() {
+    if [ "$(count_calls RegisterDisplay)" -ne 1 ]; then
+        return 1
+    fi
+    if [ "$(count_calls RegisterSession)" -ne 1 ]; then
+        return 1
+    fi
+    if [ "$(count_calls OpenSession)" -ne 1 ]; then
+        return 1
+    fi
+    return 0
+}
+
+python3 -c "from gi.repository import GLib; \
+cfg = GLib.KeyFile(); \
+cfg.load_from_file('$GDM_CFG_FILE', GLib.KeyFileFlags.KEEP_COMMENTS); \
+cfg.set_string('debug', 'Enable', 'true'); \
+cfg.save_to_file('$GDM_CFG_FILE')"
+
+dbus-monitor --system --profile interface=org.gnome.DisplayManager.Manager | tee "$DBUS_LOG" &
+systemctl start gdm3
+
+TIMEOUT=120
+SECONDS=0
+while [ $SECONDS -lt $TIMEOUT ]; do
+    sleep 1
+    if check; then
+        exit 0
+    fi
+done
+
+echo "Timed out waiting for greeter to display"
+exit 1

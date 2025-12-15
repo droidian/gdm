@@ -20,3 +20,12 @@ Restrictions: breaks-testbed,
               needs-sudo,
               allow-stderr
 
+Tests: greeter
+Depends: gdm3,
+         dpkg-dev,
+         python3,
+         python3-gi,
+         gir1.2-glib-2.0,
+Restrictions: breaks-testbed,
+              isolation-machine,
+              needs-root,
