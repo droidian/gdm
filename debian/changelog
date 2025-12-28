@@ -1,3 +1,14 @@
+gdm3 (49.2-3) unstable; urgency=medium
+
+  [ Alessandro Astone ]
+  * d/tests: Add autopkgtest verifying that the greeter registers
+
+  [ Jeremy Bícha ]
+  * Remove Recommends: xserver-xorg
+  * Bump Standards Version to 4.7.3
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 28 Dec 2025 09:29:21 -0500
+
 gdm3 (49.2-2) unstable; urgency=medium
 
   [ Alessandro Astone ]
