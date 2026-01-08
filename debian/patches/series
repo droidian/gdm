@@ -1,7 +1,6 @@
 90_config_comments.patch
 91_dconf_database_path.patch
 92_systemd_unit.patch
-94_retain_xorg_log.patch
 debian/implement-has_option-in-Xsession.patch
 debian/run_xsession.d.patch
 debian/utils-gdm-auth-config-debian-Add-debian-hook-for-gdm-conf.patch
