@@ -13,10 +13,10 @@ Forwarded: not-needed
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/data/Xsession.in b/data/Xsession.in
-index 011986e..2e6ab1e 100755
+index b0dc589..df9d819 100755
 --- a/data/Xsession.in
 +++ b/data/Xsession.in
-@@ -247,11 +247,11 @@ echo "$0: Setup done, will execute: $command"
+@@ -250,11 +250,11 @@ echo "$0: Setup done, will execute: $command"
  
  eval exec $command
  
