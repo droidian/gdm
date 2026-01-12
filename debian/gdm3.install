@@ -16,6 +16,7 @@ usr/share/gdm/
 usr/share/gnome-session/
 usr/share/dconf/
 usr/share/polkit-1/rules.d/20-gdm.rules
+usr/share/polkit-1/actions/org.gnome.displaymanager.policy
 
 debian/greeter.dconf-defaults*		usr/share/gdm
 debian/generate-config			usr/share/gdm
