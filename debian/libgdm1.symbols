@@ -1,38 +1,12 @@
 libgdm.so.1 libgdm1 #MINVER#
 * Build-Depends-Package: libgdm-dev
  gdm_activate_session_by_id@Base 3.33.90
- gdm_chooser_call_disconnect@Base 3.8.3
- gdm_chooser_call_disconnect_finish@Base 3.8.3
- gdm_chooser_call_disconnect_sync@Base 3.8.3
- gdm_chooser_call_select_hostname@Base 3.8.3
- gdm_chooser_call_select_hostname_finish@Base 3.8.3
- gdm_chooser_call_select_hostname_sync@Base 3.8.3
- gdm_chooser_complete_disconnect@Base 3.8.3
- gdm_chooser_complete_select_hostname@Base 3.8.3
- gdm_chooser_get_type@Base 3.8.3
- gdm_chooser_interface_info@Base 3.8.3
- gdm_chooser_override_properties@Base 3.8.3
- gdm_chooser_proxy_get_type@Base 3.8.3
- gdm_chooser_proxy_new@Base 3.8.3
- gdm_chooser_proxy_new_finish@Base 3.8.3
- gdm_chooser_proxy_new_for_bus@Base 3.8.3
- gdm_chooser_proxy_new_for_bus_finish@Base 3.8.3
- gdm_chooser_proxy_new_for_bus_sync@Base 3.8.3
- gdm_chooser_proxy_new_sync@Base 3.8.3
- gdm_chooser_skeleton_get_type@Base 3.8.3
- gdm_chooser_skeleton_new@Base 3.8.3
  gdm_clear_close_on_exec_flag@Base 3.33.90
  gdm_client_error_quark@Base 3.8.3
- gdm_client_get_chooser@Base 3.8.3
- gdm_client_get_chooser_finish@Base 3.8.3
- gdm_client_get_chooser_sync@Base 3.8.3
  gdm_client_get_enabled_extensions@Base 46~rc
  gdm_client_get_greeter@Base 3.8.3
  gdm_client_get_greeter_finish@Base 3.8.3
  gdm_client_get_greeter_sync@Base 3.8.3
- gdm_client_get_remote_greeter@Base 3.8.3
- gdm_client_get_remote_greeter_finish@Base 3.8.3
- gdm_client_get_remote_greeter_sync@Base 3.8.3
  gdm_client_get_type@Base 3.8.3
  gdm_client_get_user_verifier@Base 3.8.3
  gdm_client_get_user_verifier_choice_list@Base 3.26.2.1
@@ -46,12 +20,13 @@ libgdm.so.1 libgdm1 #MINVER#
  gdm_client_set_enabled_extensions@Base 3.26.2.1
  gdm_common_error_quark@Base 3.33.90
  gdm_find_display_session@Base 3.36.2
+ gdm_find_graphical_sessions_for_username@Base 50~alpha
+ gdm_find_x_server@Base 50~alpha
  gdm_generate_random_bytes@Base 3.33.90
  gdm_get_grent_for_name@Base 49~beta
  gdm_get_login_window_session_id@Base 3.33.90
  gdm_get_pwent_for_name@Base 3.33.90
  gdm_get_pwent_for_uid@Base 49~beta
- gdm_get_script_environment@Base 3.33.90
  gdm_get_session_ids@Base 3.8.3
  gdm_get_session_name_and_description@Base 3.8.3
  gdm_goto_login_session@Base 3.33.90
@@ -105,15 +80,11 @@ libgdm.so.1 libgdm1 #MINVER#
  gdm_manager_call_open_session@Base 3.8.3
  gdm_manager_call_open_session_finish@Base 3.8.3
  gdm_manager_call_open_session_sync@Base 3.8.3
- gdm_manager_call_register_display@Base 3.17.4
- gdm_manager_call_register_display_finish@Base 3.17.4
- gdm_manager_call_register_display_sync@Base 3.17.4
  gdm_manager_call_register_session@Base 3.33.4
  gdm_manager_call_register_session_finish@Base 3.33.4
  gdm_manager_call_register_session_sync@Base 3.33.4
  gdm_manager_complete_open_reauthentication_channel@Base 3.8.3
  gdm_manager_complete_open_session@Base 3.8.3
- gdm_manager_complete_register_display@Base 3.17.4
  gdm_manager_complete_register_session@Base 3.33.4
  gdm_manager_dup_version@Base 3.8.3
  gdm_manager_get_type@Base 3.8.3
@@ -130,23 +101,6 @@ libgdm.so.1 libgdm1 #MINVER#
  gdm_manager_set_version@Base 3.8.3
  gdm_manager_skeleton_get_type@Base 3.8.3
  gdm_manager_skeleton_new@Base 3.8.3
- gdm_remote_greeter_call_disconnect@Base 3.8.3
- gdm_remote_greeter_call_disconnect_finish@Base 3.8.3
- gdm_remote_greeter_call_disconnect_sync@Base 3.8.3
- gdm_remote_greeter_complete_disconnect@Base 3.8.3
- gdm_remote_greeter_get_type@Base 3.8.3
- gdm_remote_greeter_interface_info@Base 3.8.3
- gdm_remote_greeter_override_properties@Base 3.8.3
- gdm_remote_greeter_proxy_get_type@Base 3.8.3
- gdm_remote_greeter_proxy_new@Base 3.8.3
- gdm_remote_greeter_proxy_new_finish@Base 3.8.3
- gdm_remote_greeter_proxy_new_for_bus@Base 3.8.3
- gdm_remote_greeter_proxy_new_for_bus_finish@Base 3.8.3
- gdm_remote_greeter_proxy_new_for_bus_sync@Base 3.8.3
- gdm_remote_greeter_proxy_new_sync@Base 3.8.3
- gdm_remote_greeter_skeleton_get_type@Base 3.8.3
- gdm_remote_greeter_skeleton_new@Base 3.8.3
- gdm_run_script@Base 3.33.90
  gdm_shell_expand@Base 3.33.90
  gdm_shell_var_is_valid_char@Base 3.33.90
  gdm_signal_pid@Base 3.33.90
