@@ -199,7 +199,7 @@ out:
 
 static gboolean
 spawn_x_server (State        *state,
-                gboolean      allow_remote_connections,
+                gboolean      disallow_tcp,
                 GCancellable *cancellable)
 {
         GPtrArray           *arguments = NULL;
@@ -246,7 +246,7 @@ spawn_x_server (State        *state,
 
         display_fd_string = g_strdup_printf ("%d", DISPLAY_FILENO);
 
-        g_ptr_array_add (arguments, X_SERVER);
+        g_ptr_array_add (arguments, (gpointer) gdm_find_x_server ());
 
         if (vt_string != NULL) {
                 g_ptr_array_add (arguments, vt_string);
@@ -258,22 +258,10 @@ spawn_x_server (State        *state,
         g_ptr_array_add (arguments, "-auth");
         g_ptr_array_add (arguments, auth_file);
 
-        /* If we were compiled with Xserver >= 1.17 we need to specify
-         * '-listen tcp' as the X server doesn't listen on tcp sockets
-         * by default anymore. In older versions we need to pass
-         * -nolisten tcp to disable listening on tcp sockets.
-         */
-        if (!allow_remote_connections) {
-                g_ptr_array_add (arguments, "-nolisten");
-                g_ptr_array_add (arguments, "tcp");
-        }
-
-#ifdef HAVE_XSERVER_WITH_LISTEN
-        if (allow_remote_connections) {
+        if (!disallow_tcp) {
                 g_ptr_array_add (arguments, "-listen");
                 g_ptr_array_add (arguments, "tcp");
         }
-#endif
 
         g_ptr_array_add (arguments, "-background");
         g_ptr_array_add (arguments, "none");
@@ -604,7 +592,6 @@ out:
 
 static gboolean
 spawn_session (State        *state,
-               gboolean      run_script,
                GCancellable *cancellable)
 {
         GSubprocessLauncher *launcher = NULL;
@@ -616,7 +603,6 @@ spawn_session (State        *state,
                                                      "XAUTHORITY",
                                                      "WAYLAND_DISPLAY",
                                                      "WAYLAND_SOCKET",
-                                                     "GNOME_SHELL_SESSION_MODE",
                                                      NULL };
         /* The environment variables listed below are those we have set (or
          * received from our own execution environment) only as a fallback to
@@ -684,30 +670,11 @@ spawn_session (State        *state,
                 g_subprocess_launcher_setenv (launcher, "WINDOWPATH", vt, TRUE);
         }
 
-        if (run_script) {
-                subprocess = g_subprocess_launcher_spawn (launcher,
-                                                          &error,
-                                                          GDMCONFDIR "/Xsession",
-                                                          state->session_command,
-                                                          NULL);
-        } else {
-                int ret;
-                char **argv;
-
-                ret = g_shell_parse_argv (state->session_command,
-                                          NULL,
-                                          &argv,
-                                          &error);
-
-                if (!ret) {
-                        g_debug ("could not parse session arguments: %s", error->message);
-                        goto out;
-                }
-                subprocess = g_subprocess_launcher_spawnv (launcher,
-                                                           (const char * const *) argv,
-                                                           &error);
-                g_strfreev (argv);
-        }
+        subprocess = g_subprocess_launcher_spawn (launcher,
+                                                  &error,
+                                                  GDMCONFDIR "/Xsession",
+                                                  state->session_command,
+                                                  NULL);
 
         if (subprocess == NULL) {
                 g_debug ("could not start session: %s", error->message);
@@ -758,30 +725,6 @@ wait_on_subprocesses (State *state)
         if (state->session_subprocess != NULL) {
                 g_subprocess_wait (state->session_subprocess, NULL, NULL);
         }
-}
-
-static gboolean
-register_display (State        *state,
-                  GCancellable *cancellable)
-{
-        GError          *error = NULL;
-        gboolean         registered = FALSE;
-        GVariantBuilder  details;
-
-        g_variant_builder_init (&details, G_VARIANT_TYPE ("a{ss}"));
-        g_variant_builder_add (&details, "{ss}", "session-type", "x11");
-        g_variant_builder_add (&details, "{ss}", "x11-display-name", state->display_name);
-
-        registered = gdm_dbus_manager_call_register_display_sync (state->display_manager_proxy,
-                                                                  g_variant_builder_end (&details),
-                                                                  cancellable,
-                                                                  &error);
-        if (error != NULL) {
-                g_debug ("Could not register display: %s", error->message);
-                g_error_free (error);
-        }
-
-        return registered;
 }
 
 static void
@@ -869,22 +812,10 @@ main (int    argc,
       char **argv)
 {
         State           *state = NULL;
-        GOptionContext  *context = NULL;
-        static char    **args = NULL;
-        static gboolean  run_script = FALSE;
-        static gboolean  allow_remote_connections = FALSE;
         gboolean         debug = FALSE;
+        gboolean         disallow_tcp = TRUE;
         gboolean         ret;
         int              exit_status = EX_OK;
-        static gboolean  register_session = FALSE;
-
-        static GOptionEntry entries []   = {
-                { "run-script", 'r', 0, G_OPTION_ARG_NONE, &run_script, N_("Run program through /etc/gdm/Xsession wrapper script"), NULL },
-                { "allow-remote-connections", 'a', 0, G_OPTION_ARG_NONE, &allow_remote_connections, N_("Listen on TCP socket"), NULL },
-                { "register-session", 0, 0, G_OPTION_ARG_NONE, &register_session, "Register session after a delay", NULL },
-                { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_STRING_ARRAY, &args, "", "" },
-                { NULL }
-        };
 
         bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
         textdomain (GETTEXT_PACKAGE);
@@ -892,21 +823,15 @@ main (int    argc,
 
         gdm_log_init ();
 
-        context = g_option_context_new (_("GNOME Display Manager X Session Launcher"));
-        g_option_context_add_main_entries (context, entries, NULL);
-
-        g_option_context_parse (context, &argc, &argv, NULL);
-        g_option_context_free (context);
-
-        if (args == NULL || args[0] == NULL || args[1] != NULL) {
-                g_warning ("gdm-x-session takes one argument (the session)");
+        if (argc != 2) {
+                g_warning ("gdm-x-session takes exactly one argument (the session)");
                 exit_status = EX_USAGE;
                 goto out;
         }
 
         init_state (&state);
 
-        state->session_command = args[0];
+        state->session_command = argv[1];
 
         state->settings = gdm_settings_new ();
         ret = gdm_settings_direct_init (state->settings, DATADIR "/gdm/gdm.schemas", "/");
@@ -919,15 +844,16 @@ main (int    argc,
 
         gdm_settings_direct_get_boolean (GDM_KEY_DEBUG, &debug);
         state->debug_enabled = debug;
-
         gdm_log_set_debug (debug);
+
+        gdm_settings_direct_get_boolean (GDM_KEY_DISALLOW_TCP, &disallow_tcp);
 
         state->main_loop = g_main_loop_new (NULL, FALSE);
         state->cancellable = g_cancellable_new ();
 
         g_unix_signal_add (SIGTERM, (GSourceFunc) on_sigterm, state);
 
-        ret = spawn_x_server (state, allow_remote_connections, state->cancellable);
+        ret = spawn_x_server (state, disallow_tcp, state->cancellable);
 
         if (!ret) {
                 g_printerr ("Unable to run X server\n");
@@ -956,15 +882,7 @@ main (int    argc,
         if (!connect_to_display_manager (state))
                 goto out;
 
-        ret = register_display (state, state->cancellable);
-
-        if (!ret) {
-                g_printerr ("Unable to register display with display manager\n");
-                exit_status = EX_SOFTWARE;
-                goto out;
-        }
-
-        ret = spawn_session (state, run_script, state->cancellable);
+        ret = spawn_session (state, state->cancellable);
 
         if (!ret) {
                 g_printerr ("Unable to run session\n");
@@ -972,14 +890,10 @@ main (int    argc,
                 goto out;
         }
 
-        if (register_session) {
-                g_debug ("gdm-x-session: Will register session in %d seconds", REGISTER_SESSION_TIMEOUT);
-                state->register_session_id = g_timeout_add_seconds (REGISTER_SESSION_TIMEOUT,
-                                                                    register_session_timeout_cb,
-                                                                    state);
-        } else {
-                g_debug ("gdm-x-session: Session will register itself");
-        }
+        g_debug ("gdm-x-session: Will register session in %d seconds", REGISTER_SESSION_TIMEOUT);
+        state->register_session_id = g_timeout_add_seconds (REGISTER_SESSION_TIMEOUT,
+                                                            register_session_timeout_cb,
+                                                            state);
 
         g_main_loop_run (state->main_loop);
 

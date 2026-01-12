@@ -124,24 +124,6 @@ gdm_get_grent_for_name (const char    *name,
         return (grent != NULL);
 }
 
-static gboolean
-gdm_get_grent_for_gid (gint           gid,
-                       struct group **grentp)
-{
-        struct group *grent;
-
-        do {
-                errno = 0;
-                grent = getgrgid (gid);
-        } while (grent == NULL && errno == EINTR);
-
-        if (grentp != NULL) {
-                *grentp = grent;
-        }
-
-        return (grent != NULL);
-}
-
 int
 gdm_wait_on_and_disown_pid (int pid,
                             int timeout)
@@ -629,192 +611,6 @@ gdm_goto_login_session (GCancellable *cancellable,
         return goto_login_session (connection, cancellable, error);
 }
 
-static void
-listify_hash (const char *key,
-              const char *value,
-              GPtrArray  *env)
-{
-        char *str;
-        str = g_strdup_printf ("%s=%s", key, value);
-        g_debug ("Gdm: script environment: %s", str);
-        g_ptr_array_add (env, str);
-}
-
-GPtrArray *
-gdm_get_script_environment (const char *username,
-                            const char *display_name,
-                            const char *display_hostname,
-                            const char *display_x11_authority_file)
-{
-        GPtrArray     *env;
-        GHashTable    *hash;
-        struct passwd *pwent;
-
-        env = g_ptr_array_new_with_free_func (g_free);
-
-        /* create a hash table of current environment, then update keys has necessary */
-        hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-        /* modify environment here */
-        g_hash_table_insert (hash, g_strdup ("HOME"), g_strdup ("/"));
-        g_hash_table_insert (hash, g_strdup ("PWD"), g_strdup ("/"));
-        g_hash_table_insert (hash, g_strdup ("SHELL"), g_strdup ("/bin/sh"));
-
-        if (username != NULL) {
-                g_hash_table_insert (hash, g_strdup ("LOGNAME"),
-                                     g_strdup (username));
-                g_hash_table_insert (hash, g_strdup ("USER"),
-                                     g_strdup (username));
-                g_hash_table_insert (hash, g_strdup ("USERNAME"),
-                                     g_strdup (username));
-
-                gdm_get_pwent_for_name (username, &pwent);
-                if (pwent != NULL) {
-                        if (pwent->pw_dir != NULL && pwent->pw_dir[0] != '\0') {
-                                g_hash_table_insert (hash, g_strdup ("HOME"),
-                                                     g_strdup (pwent->pw_dir));
-                                g_hash_table_insert (hash, g_strdup ("PWD"),
-                                                     g_strdup (pwent->pw_dir));
-                        }
-
-                        g_hash_table_insert (hash, g_strdup ("SHELL"),
-                                             g_strdup (pwent->pw_shell));
-
-                        /* Also get group name and propagate down */
-                        struct group *grent;
-
-                        if (gdm_get_grent_for_gid (pwent->pw_gid, &grent)) {
-                                g_hash_table_insert (hash, g_strdup ("GROUP"), g_strdup (grent->gr_name));
-                        }
-                }
-        }
-
-        if (display_hostname) {
-                g_hash_table_insert (hash, g_strdup ("REMOTE_HOST"), g_strdup (display_hostname));
-        }
-
-        /* Runs as root */
-        if (display_x11_authority_file) {
-                g_hash_table_insert (hash, g_strdup ("XAUTHORITY"), g_strdup (display_x11_authority_file));
-        }
-
-        if (display_name) {
-                g_hash_table_insert (hash, g_strdup ("DISPLAY"), g_strdup (display_name));
-        }
-        g_hash_table_insert (hash, g_strdup ("PATH"), g_strdup (GDM_SESSION_DEFAULT_PATH));
-        g_hash_table_insert (hash, g_strdup ("RUNNING_UNDER_GDM"), g_strdup ("true"));
-
-        g_hash_table_remove (hash, "MAIL");
-
-        g_hash_table_foreach (hash, (GHFunc)listify_hash, env);
-        g_hash_table_destroy (hash);
-
-        g_ptr_array_add (env, NULL);
-
-        return env;
-}
-
-gboolean
-gdm_run_script (const char *dir,
-                const char *username,
-                const char *display_name,
-                const char *display_hostname,
-                const char *display_x11_authority_file)
-{
-        char      *script;
-        char     **argv;
-        gint       status;
-        GError    *error;
-        GPtrArray *env;
-        gboolean   res;
-        gboolean   ret;
-
-        ret = FALSE;
-
-        g_assert (dir != NULL);
-        g_assert (username != NULL);
-
-        script = g_build_filename (dir, display_name, NULL);
-        g_debug ("Trying script %s", script);
-        if (! (g_file_test (script, G_FILE_TEST_IS_REGULAR)
-               && g_file_test (script, G_FILE_TEST_IS_EXECUTABLE))) {
-                g_debug ("script %s not found; skipping", script);
-                g_free (script);
-                script = NULL;
-        }
-
-        if (script == NULL
-            && display_hostname != NULL
-            && display_hostname[0] != '\0') {
-                script = g_build_filename (dir, display_hostname, NULL);
-                g_debug ("Trying script %s", script);
-                if (! (g_file_test (script, G_FILE_TEST_IS_REGULAR)
-                       && g_file_test (script, G_FILE_TEST_IS_EXECUTABLE))) {
-                        g_debug ("script %s not found; skipping", script);
-                        g_free (script);
-                        script = NULL;
-                }
-        }
-
-        if (script == NULL) {
-                script = g_build_filename (dir, "Default", NULL);
-                g_debug ("Trying script %s", script);
-                if (! (g_file_test (script, G_FILE_TEST_IS_REGULAR)
-                       && g_file_test (script, G_FILE_TEST_IS_EXECUTABLE))) {
-                        g_debug ("script %s not found; skipping", script);
-                        g_free (script);
-                        script = NULL;
-                }
-        }
-
-        if (script == NULL) {
-                g_debug ("no script found");
-                return TRUE;
-        }
-
-        g_debug ("Running process: %s", script);
-        error = NULL;
-        if (! g_shell_parse_argv (script, NULL, &argv, &error)) {
-                g_warning ("Could not parse command: %s", error->message);
-                g_error_free (error);
-                goto out;
-        }
-
-        env = gdm_get_script_environment (username,
-                                          display_name,
-                                          display_hostname,
-                                          display_x11_authority_file);
-
-        res = g_spawn_sync (NULL,
-                            argv,
-                            (char **)env->pdata,
-                            G_SPAWN_SEARCH_PATH,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            &status,
-                            &error);
-
-        g_ptr_array_free (env, TRUE);
-        g_strfreev (argv);
-
-        if (! res) {
-                g_warning ("Unable to run script: %s", error->message);
-                g_error_free (error);
-        }
-
-        if (WIFEXITED (status)) {
-                g_debug ("Process exit status: %d", WEXITSTATUS (status));
-                ret = WEXITSTATUS (status) == 0;
-        }
-
- out:
-        g_free (script);
-
-        return ret;
-}
-
 gboolean
 gdm_shell_var_is_valid_char (gchar c, gboolean first)
 {
@@ -960,6 +756,64 @@ _systemd_session_is_active (const char *session_id)
         return TRUE;
 }
 
+static gboolean
+find_graphical_sessions (const uid_t    uid,
+                         char        ***out_sessions)
+{
+        g_auto (GStrv) sessions = NULL;
+        g_autoptr (GStrvBuilder) builder = NULL;
+        int n_sessions;
+
+        g_debug ("Finding a graphical session for user %d", uid);
+
+        n_sessions = sd_uid_get_sessions (uid,
+                                          GDM_SYSTEMD_SESSION_REQUIRE_ONLINE,
+                                          &sessions);
+        if (n_sessions < 0)
+                return FALSE;
+
+        builder = g_strv_builder_new ();
+
+        for (int i = 0; i < n_sessions; ++i) {
+                g_debug ("Considering session '%s'", sessions[i]);
+
+                if (!_systemd_session_is_graphical (sessions[i]))
+                        continue;
+
+                if (!_systemd_session_is_active (sessions[i]))
+                        continue;
+
+                g_strv_builder_add (builder, g_strdup (sessions[i]));
+        }
+
+        *out_sessions = g_strv_builder_end (builder);
+
+        return TRUE;
+}
+
+gboolean
+gdm_find_graphical_sessions_for_username (const char   *username,
+                                          char       ***sessions,
+                                          GError      **error)
+{
+        struct passwd *pwent;
+
+        gdm_get_pwent_for_name (username, &pwent);
+        if (pwent == NULL) {
+                g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                             "Couldn't get pw entry for username %s", username);
+                return FALSE;
+        }
+
+        if (!find_graphical_sessions (pwent->pw_uid, sessions)) {
+                g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                             "Couldn't find sessions for username %s", username);
+                return FALSE;
+        }
+
+        return TRUE;
+}
+
 gboolean
 gdm_find_display_session (GPid        pid,
                           const uid_t uid,
@@ -968,7 +822,6 @@ gdm_find_display_session (GPid        pid,
 {
         char *local_session_id = NULL;
         g_auto(GStrv) sessions = NULL;
-        int n_sessions;
         int res;
 
         g_return_val_if_fail (out_session_id != NULL, FALSE);
@@ -993,13 +846,7 @@ gdm_find_display_session (GPid        pid,
                                    pid, strerror (-res));
         }
 
-        g_debug ("Finding a graphical session for user %d", uid);
-
-        n_sessions = sd_uid_get_sessions (uid,
-                                          GDM_SYSTEMD_SESSION_REQUIRE_ONLINE,
-                                          &sessions);
-
-        if (n_sessions < 0) {
+        if (!find_graphical_sessions (uid, &sessions)) {
                 g_set_error (error,
                              GDM_COMMON_ERROR,
                              0,
@@ -1008,23 +855,7 @@ gdm_find_display_session (GPid        pid,
                 return FALSE;
         }
 
-        for (int i = 0; i < n_sessions; ++i) {
-                g_debug ("Considering session '%s'", sessions[i]);
-
-                if (!_systemd_session_is_graphical (sessions[i]))
-                        continue;
-
-                if (!_systemd_session_is_active (sessions[i]))
-                        continue;
-
-                /*
-                 * We get the sessions from newest to oldest, so take the last
-                 * one we find that's good
-                 */
-                local_session_id = sessions[i];
-        }
-
-        if (local_session_id == NULL) {
+        if (g_strv_length (sessions) == 0) {
                 g_set_error (error,
                              GDM_COMMON_ERROR,
                              0,
@@ -1033,7 +864,11 @@ gdm_find_display_session (GPid        pid,
                 return FALSE;
         }
 
-        *out_session_id = g_strdup (local_session_id);
+        /*
+         * We get the sessions from newest to oldest, so take the last
+         * one we find that's good
+         */
+        *out_session_id = g_strdup (sessions[0]);
 
         return TRUE;
 }
@@ -1159,4 +994,26 @@ gdm_load_env_d (GdmLoadEnvVarFunc load_env_func,
         dir = g_file_new_for_path (GDMCONFDIR "/env.d");
         gdm_load_env_dir (dir, load_env_func, expand_func, user_data);
         g_object_unref (dir);
+}
+
+const char * const
+gdm_find_x_server (void)
+{
+        const char * const x_servers[] = {
+                "/usr/bin/Xorg",
+                "/usr/bin/X",
+        };
+        const char *override = NULL;
+
+        override = g_getenv ("GDM_X_SERVER_PATH");
+        if (override != NULL)
+                return override;
+
+        for (size_t i = 0; i < G_N_ELEMENTS (x_servers); i++) {
+                const char * const candidate = x_servers[i];
+                if (g_file_test (candidate, G_FILE_TEST_IS_EXECUTABLE))
+                        return candidate;
+        }
+
+        return NULL;
 }
