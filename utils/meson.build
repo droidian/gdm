@@ -1,16 +1,3 @@
-# gdm-flexiserver
-gdm_flexiserver_deps = [
-  glib_dep,
-  libgdmcommon_dep,
-]
-
-gdm_flexiserver = executable('gdmflexiserver',
-  'gdmflexiserver.c',
-  dependencies: gdm_flexiserver_deps,
-  include_directories: config_h_dir,
-  install: true,
-)
-
 # gdm-runtime-config
 gdm_runtime_config_deps = [
   glib_dep,
@@ -33,6 +20,21 @@ gdm_auth_config = executable('gdm-config',
   ],
   include_directories: config_h_dir,
   install: true,
+)
+
+# gdm-new-session
+gdm_new_session_deps = [
+  glib_dep,
+  gio_dep,
+  logind_dep,
+]
+
+gdm_new_session = executable('gdm-new-session',
+  'gdm-new-session.c',
+  dependencies: gdm_new_session_deps,
+  include_directories: config_h_dir,
+  install: true,
+  install_dir: get_option('libexecdir'),
 )
 
 auth_config_distro_hooks = [

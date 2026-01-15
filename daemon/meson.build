@@ -74,17 +74,8 @@ gdm_daemon_deps = [
   gio_unix_dep,
   json_glib,
   libpam_dep,
+  polkit_dep,
 ]
-if have_x11_support
-  gdm_daemon_deps += [
-    xcb_dep,
-    x_deps,
-  ]
-endif
-
-if have_xdmcp and get_option('tcp-wrappers')
-  gdm_daemon_deps += libwrap_dep
-endif
 
 # test-session-client
 test_session_client_src = [
@@ -172,9 +163,14 @@ if have_x11_support
     manager_dbus_gen,
   ]
 
+  gdm_x_session_deps = [
+    gdm_daemon_deps,
+    xau_dep,
+  ]
+
   gdm_x_session = executable('gdm-x-session',
     gdm_x_session_src,
-    dependencies: gdm_daemon_deps,
+    dependencies: gdm_x_session_deps,
     include_directories: gdm_session_worker_includes,
     install: true,
     install_dir: get_option('libexecdir'),
@@ -184,19 +180,16 @@ endif
 # GDM daemon
 gdm_daemon_sources = files(
   'gdm-dbus-util.c',
-  'gdm-display-access-file.c',
   'gdm-display-factory.c',
   'gdm-display-store.c',
   'gdm-display.c',
   'gdm-dynamic-user-store.c',
   'gdm-launch-environment.c',
-  'gdm-legacy-display.c',
   'gdm-local-display-factory.c',
   'gdm-local-display.c',
   'gdm-remote-display.c',
   'gdm-remote-display-factory.c',
   'gdm-manager.c',
-  'gdm-server.c',
   'gdm-session-record.c',
   'gdm-session-worker-common.c',
   'gdm-session-worker-job.c',
@@ -215,19 +208,6 @@ gdm_daemon_gen_sources = [
   session_worker_dbus_gen,
   gdm_session_enums,
 ]
-
-if have_xdmcp
-  gdm_daemon_deps += xdmcp_dep
-
-  gdm_daemon_sources = [
-    gdm_daemon_sources,
-    files(
-      'gdm-xdmcp-display-factory.c',
-      'gdm-xdmcp-display.c',
-      'gdm-xdmcp-chooser-display.c',
-    ),
-  ]
-endif
 
 if gudev_dep.found()
   gdm_daemon_deps += gudev_dep
