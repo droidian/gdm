@@ -1,5 +1,21 @@
 #!/bin/bash
 
+has_primary_gpu=false
+for dev in $(udevadm trigger --dry-run --verbose --sysname-match="card*" --subsystem-match=drm --tag-match=master-of-seat |
+             grep -v platform-simple-framebuffer); do
+    if udevadm info -a -p "$dev" | grep -Eq 'ATTRS{boot_(vga|display)}=="1"'; then
+        has_primary_gpu=true
+        break
+    fi
+done
+
+if [ $has_primary_gpu = false ]; then
+    echo "Skipped because kernel reports no primary GPU"
+    exit 77
+fi
+
+
+
 DBUS_LOG="${AUTOPKGTEST_ARTIFACTS}/dbus-log"
 JOURNAL_LOG="${AUTOPKGTEST_ARTIFACTS}/journal"
 GDM_CFG_FILE=/etc/gdm3/daemon.conf
