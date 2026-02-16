@@ -51,6 +51,7 @@
 
 #define MAX_DISPLAY_FAILURES 5
 #define WAIT_TO_FINISH_TIMEOUT 10 /* seconds */
+#define SEAT0_GRAPHICS_CHECK_TIMEOUT 10 /* seconds */
 
 struct _GdmLocalDisplayFactory
 {
@@ -73,6 +74,9 @@ struct _GdmLocalDisplayFactory
 
         gboolean         seat0_has_platform_graphics;
         gboolean         seat0_has_boot_up_graphics;
+
+        gboolean         seat0_graphics_check_timed_out;
+        guint            seat0_graphics_check_timeout_id;
 
         gulong           uevent_handler_id;
 
@@ -260,8 +264,6 @@ on_display_status_changed (GdmDisplay             *display,
         char            *session_id = NULL;
         gboolean         is_initial = TRUE;
         gboolean         is_local = TRUE;
-        gboolean         registered = FALSE;
-
 
         if (!factory->is_started)
                 return;
@@ -316,11 +318,7 @@ on_display_status_changed (GdmDisplay             *display,
         case GDM_DISPLAY_PREPARED:
                 break;
         case GDM_DISPLAY_MANAGED:
-                g_object_get (display, "session-registered", &registered, NULL);
-                if (registered) {
-                        g_debug ("GdmLocalDisplayFactory: session registered on display, looking for any background displays to kill");
-                        finish_waiting_displays_on_seat (factory, "seat0");
-                }
+                finish_waiting_displays_on_seat (factory, "seat0");
                 break;
         case GDM_DISPLAY_WAITING_TO_FINISH:
                 break;
@@ -400,6 +398,12 @@ udev_is_settled (GdmLocalDisplayFactory *factory)
 
         if (factory->seat0_has_boot_up_graphics) {
                 g_debug ("GdmLocalDisplayFactory: udev settled, boot up graphics available.");
+                return TRUE;
+        }
+
+        if (factory->seat0_graphics_check_timed_out) {
+                g_debug ("GdmLocalDisplayFactory: udev timed out, proceeding anyway.");
+                g_clear_signal_handler (&factory->uevent_handler_id, factory->gudev_client);
                 return TRUE;
         }
 
@@ -487,7 +491,25 @@ udev_is_settled (GdmLocalDisplayFactory *factory)
 }
 #endif
 
-GdmDisplay *
+static gboolean
+on_seat0_graphics_check_timeout (gpointer user_data)
+{
+        GdmLocalDisplayFactory *factory = user_data;
+
+        g_warning ("It appears that your system does not have a primary GPU! Proceeding with any GPU");
+
+        factory->seat0_graphics_check_timeout_id = 0;
+
+        /* Simply try to re-add seat0. If it is there already (i.e. CanGraphical
+         * turned TRUE, then we'll find it and it will not be created again).
+         */
+        factory->seat0_graphics_check_timed_out = TRUE;
+        ensure_display_for_seat (factory, "seat0");
+
+        return G_SOURCE_REMOVE;
+}
+
+static GdmDisplay *
 get_display_for_seat (GdmLocalDisplayFactory *factory,
                       const char             *seat_id)
 {
@@ -503,7 +525,7 @@ get_display_for_seat (GdmLocalDisplayFactory *factory,
         else
                 display = gdm_display_store_find (store, lookup_managed_display_by_seat_id, (gpointer) seat_id);
 
-        return display;
+        return display != NULL ? g_object_ref (display) : NULL;
 }
 
 static void
@@ -543,9 +565,20 @@ ensure_display_for_seat (GdmLocalDisplayFactory *factory,
 #ifdef HAVE_UDEV
         if (!udev_is_settled (factory)) {
                 g_debug ("GdmLocalDisplayFactory: udev is still settling, so not creating display yet");
+
+                if (is_seat0 && factory->seat0_graphics_check_timeout_id == 0) {
+                        g_debug("GdmLocalDisplayFactory: Waiting for up to %d seconds for a primary GPU to appear",
+                                SEAT0_GRAPHICS_CHECK_TIMEOUT);
+                        factory->seat0_graphics_check_timeout_id = g_timeout_add_seconds (SEAT0_GRAPHICS_CHECK_TIMEOUT,
+                                                                                          on_seat0_graphics_check_timeout,
+                                                                                          factory);
+                }
+
                 return;
         }
 #endif
+
+        g_clear_handle_id (&factory->seat0_graphics_check_timeout_id, g_source_remove);
 
         ret = sd_seat_can_graphical (seat_id);
 
@@ -906,6 +939,8 @@ on_vt_changed (GIOChannel    *source,
         if (factory->active_vt != login_window_vt) {
                 GdmDisplay *display;
 
+                g_clear_handle_id (&factory->seat0_graphics_check_timeout_id, g_source_remove);
+
                 display = gdm_display_store_find (store,
                                                   lookup_by_tty,
                                                   (gpointer) tty_of_active_vt);
@@ -1067,6 +1102,7 @@ gdm_local_display_factory_stop_monitor (GdmLocalDisplayFactory *factory)
         }
         g_clear_handle_id (&factory->active_vt_watch_id, g_source_remove);
         g_clear_handle_id (&factory->wait_to_finish_timeout_id, g_source_remove);
+        g_clear_handle_id (&factory->seat0_graphics_check_timeout_id, g_source_remove);
 }
 
 static void

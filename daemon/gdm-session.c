@@ -244,7 +244,7 @@ on_authenticate_cb (GdmDBusWorker *proxy,
         GdmSession *self;
         char *service_name;
 
-        GError *error = NULL;
+        g_autoptr(GError) error = NULL;
         gboolean worked;
 
         worked = gdm_dbus_worker_call_authenticate_finish (proxy, res, &error);
@@ -259,11 +259,16 @@ on_authenticate_cb (GdmDBusWorker *proxy,
         if (worked) {
                 gdm_session_authorize (self, service_name);
         } else {
-                g_signal_emit (self,
-                               signals[AUTHENTICATION_FAILED],
-                               0,
-                               service_name,
-                               conversation->worker_pid);
+                if (!g_error_matches (error,
+                                      GDM_SESSION_WORKER_ERROR,
+                                      GDM_SESSION_WORKER_ERROR_SERVICE_UNAVAILABLE)) {
+                        g_signal_emit (self,
+                                       signals[AUTHENTICATION_FAILED],
+                                       0,
+                                       service_name,
+                                       conversation->worker_pid);
+                }
+
                 report_and_stop_conversation (self, service_name, error);
         }
 }
@@ -277,7 +282,7 @@ on_authorize_cb (GdmDBusWorker *proxy,
         GdmSession *self;
         char *service_name;
 
-        GError *error = NULL;
+        g_autoptr(GError) error = NULL;
         gboolean worked;
 
         worked = gdm_dbus_worker_call_authorize_finish (proxy, res, &error);
@@ -305,7 +310,7 @@ on_establish_credentials_cb (GdmDBusWorker *proxy,
         GdmSession *self;
         char *service_name;
 
-        GError *error = NULL;
+        g_autoptr(GError) error = NULL;
         gboolean worked;
 
         worked = gdm_dbus_worker_call_establish_credentials_finish (proxy, res, &error);
@@ -827,8 +832,9 @@ gdm_session_handle_custom_json_request (GdmDBusWorkerManager  *worker_manager_in
         if (conversation != NULL) {
                 set_pending_query (conversation, invocation);
 
-                g_debug ("GdmSession: emitting custom JSON request '%s' v%u",
-                         protocol, version);
+                if (g_getenv ("GDM_DEBUG_JSON_REQUESTS") != NULL)
+                        g_message ("GdmSession: emitting custom JSON request '%s' v%u: %s",
+                                   protocol, version, request);
                 gdm_dbus_user_verifier_custom_json_emit_request (custom_json_interface,
                                                                  service_name,
                                                                  protocol,
@@ -2280,13 +2286,19 @@ worker_died (GdmSessionWorkerJob    *job,
              GdmSessionConversation *conversation)
 {
         GdmSession *self = conversation->session;
+        int pid = conversation->worker_pid;
 
-        g_debug ("GdmSession: Worker job died: %d", signum);
+        g_warning ("GdmSession: Worker job (pid:%d) died: %d", pid, signum);
 
         g_hash_table_steal (self->conversations, conversation->service_name);
 
         g_object_ref (conversation->job);
         if (self->session_conversation == conversation) {
+                if (self->session_pid != -1) {
+                        g_debug ("GdmSession: Sending SIGTERM to session pid %d", self->session_pid);
+                        gdm_signal_pid (self->session_pid, SIGTERM);
+                }
+
                 g_signal_emit (self, signals[SESSION_DIED], 0, signum);
                 self->session_conversation = NULL;
         }
@@ -2965,7 +2977,7 @@ on_start_program_cb (GdmDBusWorker *worker,
         GdmSession *self;
         char *service_name;
 
-        GError *error = NULL;
+        g_autoptr(GError) error = NULL;
         gboolean worked;
         GPid pid;
 
@@ -3021,9 +3033,9 @@ gdm_session_start_session (GdmSession *self,
         command = get_session_command (self);
 
         if (g_strcmp0 (self->session_type, "wayland") == 0) {
-                gboolean register_session = !gdm_session_session_registers (self);
+                gboolean needs_registration = !gdm_session_session_registers (self);
                 program = g_strdup_printf (LIBEXECDIR "/gdm-wayland-session %s\"%s\"",
-                                           register_session ? "--register-session " : "",
+                                           needs_registration ? "--handle-registration " : "",
                                            command);
         } else {
                 program = g_strdup_printf (LIBEXECDIR "/gdm-x-session \"%s\"", command);
@@ -3181,7 +3193,7 @@ gdm_session_set_timed_login_details (GdmSession *self,
         g_return_if_fail (username != NULL);
 
         g_debug ("GdmSession: timed login details %s %d", username, delay);
-        self->timed_login_username = g_strdup (username);
+        g_set_str (&self->timed_login_username, username);
         self->timed_login_delay = delay;
 }
 
@@ -3216,7 +3228,7 @@ gdm_session_is_frozen (GdmSession *self)
 
         for (gsize i = 0; arr[i] != NULL; i++) {
                 if (g_str_equal (arr[i], "frozen"))
-                        return g_str_equal (arr[i + 1], "1");
+                        return g_strcmp0 (arr[i + 1], "1") == 0;
         }
         return FALSE;
 }
@@ -3723,6 +3735,7 @@ gdm_session_finalize (GObject *object)
         g_free (self->selected_session);
         g_free (self->saved_session);
         g_free (self->saved_language);
+        g_free (self->timed_login_username);
 
         g_free (self->fallback_session_name);
 
