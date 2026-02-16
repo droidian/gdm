@@ -191,12 +191,17 @@ function test_authentication() {
 
   cat <<EOF > /etc/sssd/sssd.conf || return 2
 [sssd]
-enable_files_domain = True
 services = pam
+domains = local
 #certificate_verification = $verification_options
 
-[certmap/implicit_files/$SUDO_USER]
+[certmap/local/${SUDO_USER}]
 matchrule = <SUBJECT>.*Test Organization.*
+
+[domain/local]
+id_provider = proxy
+proxy_lib_name = files
+local_auth_policy = only
 
 [pam]
 pam_cert_db_path = $ca_db
