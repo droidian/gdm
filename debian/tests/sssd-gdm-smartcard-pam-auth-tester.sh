@@ -63,20 +63,14 @@ function restore_changes() {
 
   for path in "${delete_paths[@]}"; do
     rm -f "$path"
-    #find "$(dirname "$path")" -empty -delete || true
   done
 
   update-alternatives --auto gdm-smartcard
 
   if [ -e /etc/sssd/sssd.conf ]; then
-    chmod 600 /etc/sssd/sssd.conf || return 1
     systemctl restart sssd || true
   else
     systemctl stop sssd || true
-  fi
-
-  if [ -e /etc/softhsm/softhsm2.conf ]; then
-    chmod 600 /etc/softhsm/softhsm2.conf || return 1
   fi
 
   rm -rf "$tmpdir"
@@ -135,7 +129,8 @@ elif [ ! -e "$tester" ] && [[ -v OFFLINE_MODE ]]; then
 fi
 
 export PIN TEST_TMPDIR="$tmpdir" GENERATE_SMART_CARDS=1 KEEP_TEMPORARY_FILES=1 NO_SSSD_TESTS=1
-bash "$tester"
+chown sssd:sssd "$tmpdir"
+runuser -u sssd bash "$tester"
 
 find "$tmpdir" -type d -exec chmod 777 {} \;
 find "$tmpdir" -type f -exec chmod 666 {} \;
@@ -170,9 +165,11 @@ system_config="/etc"
 softhsm2_conf_paths=(
   "$SUDO_USER:$user_config/softhsm2/softhsm2.conf"
   "$GDM_USER:$gdm_config/softhsm2/softhsm2.conf"
-  "root:$system_config/softhsm/softhsm2.conf"
+  "sssd:$system_config/softhsm/softhsm2.conf"
 )
 
+chgrp sssd "$system_config/softhsm"
+chmod g+rwx "$system_config/softhsm"
 for path_pair in "${softhsm2_conf_paths[@]}"; do
   IFS=":" read -r -a path <<< "${path_pair}"
   path="${path[1]}"
@@ -185,15 +182,12 @@ function test_authentication() {
   ca_db="$2"
   verification_options="$3"
 
-  mkdir -p -m 700 /etc/sssd
-
   echo "Using CA DB '$ca_db' with verification options: '$verification_options'"
 
   cat <<EOF > /etc/sssd/sssd.conf || return 2
 [sssd]
 services = pam
 domains = local
-#certificate_verification = $verification_options
 
 [certmap/local/${SUDO_USER}]
 matchrule = <SUBJECT>.*Test Organization.*
@@ -211,7 +205,8 @@ pam_verbosity = 10
 debug_level = 10
 EOF
 
-  chmod 600 /etc/sssd/sssd.conf || return 2
+  chown root:sssd /etc/sssd/sssd.conf || return 2
+  chmod 640 /etc/sssd/sssd.conf || return 2
 
   for path_pair in "${softhsm2_conf_paths[@]}"; do
     IFS=":" read -r -a path <<< "${path_pair}"
