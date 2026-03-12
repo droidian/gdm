@@ -1,8 +1,25 @@
 gdm3 (50~alpha.1-1) UNRELEASED; urgency=medium
 
+  [ Alessandro Astone ]
   * New upstream release
+  * d/p/16_xserver_path.patch, d/rules: Drop patch not necessary anymore
+  * d/p/94_retain_xorg_log.patch: Drop unused patch
+  * d/p: Rebase all other patches
+  * d/rules: Drop unused configuration options
+  * d/rules: Stop deleting source files in clean
+  * d/install: Cleanup non existing files
+  * d/install: Add new installed files
+  * d/symbols: Update symbols
+  * d/control: Bump minimum gnome-shell and gnome-session
+  * d/tests: Skip greeter test if no primary GPU is detected
+  * d/control: Depend on libsystemd >= 259
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 15 Jan 2026 17:20:12 +0100
+  [ Jonas Jelten ]
+  * d/t/sssd-gdm-smartcard-pam-auth-tester: remove sssd implicit files domain
+    (Closes: #1126368) (LP: #2130705)
+  * d/t/sssd-gdm-smartcard-pam-auth-tester: allow sssd to run as non-root
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 12 Mar 2026 18:26:28 +0100
 
 gdm3 (49.2-3) unstable; urgency=medium
 
