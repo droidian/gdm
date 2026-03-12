@@ -13,13 +13,18 @@ gdm3 (50~rc-1) UNRELEASED; urgency=medium
   * d/control: Bump minimum gnome-shell and gnome-session
   * d/tests: Skip greeter test if no primary GPU is detected
   * d/control: Depend on libsystemd >= 259
+  * d/control: Breaks gnome-remote-desktop
 
   [ Jonas Jelten ]
   * d/t/sssd-gdm-smartcard-pam-auth-tester: remove sssd implicit files domain
     (Closes: #1126368) (LP: #2130705)
   * d/t/sssd-gdm-smartcard-pam-auth-tester: allow sssd to run as non-root
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 12 Mar 2026 18:26:59 +0100
+  [ Marco Trevisan (Treviño) ]
+  * debian/rules: Remove unused udevdir variable
+  * debian/libgdm1.symbols: Add new symbols
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 12 Mar 2026 18:28:12 +0100
 
 gdm3 (49.2-3) unstable; urgency=medium
 
