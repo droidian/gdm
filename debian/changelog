@@ -26,6 +26,17 @@ gdm3 (50~rc-1) UNRELEASED; urgency=medium
 
  -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 12 Mar 2026 18:28:12 +0100
 
+gdm3 (49.2-4) unstable; urgency=medium
+
+  [ Jonas Jelten ]
+  * d/t/sssd-gdm-smartcard-pam-auth-tester: remove sssd implicit files domain
+    (Closes: #1126368) (LP: #2130705)
+
+  [ Jeremy Bícha ]
+  * Branch for forky
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 18 Feb 2026 09:51:40 -0500
+
 gdm3 (49.2-3) unstable; urgency=medium
 
   [ Alessandro Astone ]
