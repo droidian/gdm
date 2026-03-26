@@ -26,8 +26,11 @@ gdm3 (50~rc-1) UNRELEASED; urgency=medium
 
   [ Simon McVittie ]
   * Revert "Branch for forky"
+  * d/copyright: Update
+  * d/control: Add Breaks on gnome-kiosk (<< 50).
+    The ABI of gdm_manager_call_register_display_sync() has changed.
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 12 Mar 2026 18:28:12 +0100
+ -- Simon McVittie <smcv@debian.org>  Thu, 26 Mar 2026 11:19:53 +0000
 
 gdm3 (49.2-4) unstable; urgency=medium
 
