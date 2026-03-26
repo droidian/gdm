@@ -1,7 +1,7 @@
-gdm3 (50~rc-1) UNRELEASED; urgency=medium
+gdm3 (50.0-1) UNRELEASED; urgency=medium
 
   [ Alessandro Astone ]
-  * New upstream release
+  * New upstream release 50.rc
   * d/p/16_xserver_path.patch, d/rules: Drop patch not necessary anymore
   * d/p/94_retain_xorg_log.patch: Drop unused patch
   * d/p: Rebase all other patches
@@ -32,6 +32,7 @@ gdm3 (50~rc-1) UNRELEASED; urgency=medium
   * Remove man page for gdmflexiserver(1), which was removed upstream
   * d/copyright: Update
   * d/watch: Convert to v5 format
+  * New upstream release 50.0
 
  -- Simon McVittie <smcv@debian.org>  Thu, 26 Mar 2026 11:47:25 +0000
 
