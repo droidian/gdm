@@ -99,6 +99,7 @@ Architecture: linux-any
 Depends: ${gir:Depends},
          ${misc:Depends},
          ${shlibs:Depends}
+Breaks: gnome-kiosk (<< 50)
 Description: GNOME Display Manager (shared library)
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
