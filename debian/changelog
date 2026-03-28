@@ -1,4 +1,6 @@
-gdm3 (50.0-1) UNRELEASED; urgency=medium
+gdm3 (50.0-1) experimental; urgency=medium
+
+  * Team upload
 
   [ Alessandro Astone ]
   * New upstream release 50.rc
@@ -34,7 +36,7 @@ gdm3 (50.0-1) UNRELEASED; urgency=medium
   * d/watch: Convert to v5 format
   * New upstream release 50.0
 
- -- Simon McVittie <smcv@debian.org>  Thu, 26 Mar 2026 11:47:25 +0000
+ -- Simon McVittie <smcv@debian.org>  Sat, 28 Mar 2026 20:51:54 +0000
 
 gdm3 (49.2-4) unstable; urgency=medium
 
