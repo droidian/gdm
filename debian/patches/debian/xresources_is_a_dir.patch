@@ -12,7 +12,7 @@ Forwarded: not-needed
  1 file changed, 2 insertions(+), 4 deletions(-)
 
 diff --git a/data/Xsession.in b/data/Xsession.in
-index df9d819..dab24ce 100755
+index e22a6d2..0239a2d 100755
 --- a/data/Xsession.in
 +++ b/data/Xsession.in
 @@ -94,7 +94,7 @@ userresources="$HOME/.Xresources"

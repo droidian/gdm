@@ -9,10 +9,10 @@ Forwarded: not-needed
  data/Xsession.in | 13 +++++++++++++
  1 file changed, 13 insertions(+)
 
-Index: debian-gdm/data/Xsession.in
-===================================================================
---- debian-gdm.orig/data/Xsession.in
-+++ debian-gdm/data/Xsession.in
+diff --git a/data/Xsession.in b/data/Xsession.in
+index 72cef98..b7f04cb 100755
+--- a/data/Xsession.in
++++ b/data/Xsession.in
 @@ -207,6 +207,19 @@ has_option() {
    fi
  }
