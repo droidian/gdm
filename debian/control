@@ -5,7 +5,6 @@ Uploaders: Jeremy Bícha <jbicha@ubuntu.com>, Laurent Bigonville <bigon@debian.o
 Build-Depends: check (>= 0.9.4),
                dconf-cli (>= 0.19.90),
                debhelper-compat (= 13),
-               dh-exec,
                dh-sequence-gir,
                dh-sequence-gnome,
                dh-sequence-installsysusers,
@@ -38,7 +37,7 @@ Build-Depends: check (>= 0.9.4),
                libxdmcp-dev,
                meson (>= 0.57),
                pkgconf,
-               systemd-dev,
+               systemd-dev (>= 255~rc3-3~),
 Standards-Version: 4.7.4
 Vcs-Browser: https://salsa.debian.org/gnome-team/gdm
 Vcs-Git: https://salsa.debian.org/gnome-team/gdm.git
