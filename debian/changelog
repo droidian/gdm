@@ -1,3 +1,14 @@
+gdm3 (50.0-2) UNRELEASED; urgency=medium
+
+  [ Illia Bobyr ]
+  * Xsession: Move `has_option` above sourcing of `Xsession.d`,
+    so that scripts in `Xsession.d` can use `has_option`
+
+  [ Alessandro Astone ]
+  * d/p: Regenerate patches with gbp
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 31 May 2026 08:44:40 +0100
+
 gdm3 (50.0-1) experimental; urgency=medium
 
   * Team upload
