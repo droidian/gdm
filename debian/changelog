@@ -1,4 +1,7 @@
-gdm3 (50.0-2) UNRELEASED; urgency=medium
+gdm3 (50.1-1) UNRELEASED; urgency=medium
+
+  [ Simon McVittie ]
+  * New upstream stable release
 
   [ Illia Bobyr ]
   * Xsession: Move `has_option` above sourcing of `Xsession.d`,
