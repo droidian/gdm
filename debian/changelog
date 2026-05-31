@@ -1,7 +1,12 @@
-gdm3 (50.1-1) UNRELEASED; urgency=medium
+gdm3 (50.1-1) experimental; urgency=medium
+
+  * Team upload
 
   [ Simon McVittie ]
   * New upstream stable release
+  * Standards-Version: 4.7.4 (no changes required)
+  * Assume that system unit directory is /usr/lib/systemd/system, and stop
+    using dh-exec
 
   [ Illia Bobyr ]
   * Xsession: Move `has_option` above sourcing of `Xsession.d`,
@@ -10,7 +15,7 @@ gdm3 (50.1-1) UNRELEASED; urgency=medium
   [ Alessandro Astone ]
   * d/p: Regenerate patches with gbp
 
- -- Simon McVittie <smcv@debian.org>  Sun, 31 May 2026 08:44:40 +0100
+ -- Simon McVittie <smcv@debian.org>  Sun, 31 May 2026 21:54:34 +0100
 
 gdm3 (50.0-1) experimental; urgency=medium
 
