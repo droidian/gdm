@@ -35,11 +35,12 @@ G_BEGIN_DECLS
 #define GDM_KEY_XORG_ENABLE "daemon/XorgEnable"
 #endif
 #define GDM_KEY_REMOTE_LOGIN_ENABLE "daemon/RemoteLoginEnable"
+#define GDM_KEY_SHOW_LOCAL_GREETER "daemon/ShowLocalGreeter"
+#define GDM_KEY_FALLBACK_SESSION "daemon/FallbackSession"
 
 #define GDM_KEY_DEBUG "debug/Enable"
 
 #define GDM_KEY_DISALLOW_TCP "security/DisallowTCP"
-#define GDM_KEY_ALLOW_REMOTE_AUTOLOGIN "security/AllowRemoteAutoLogin"
 
 G_END_DECLS
 

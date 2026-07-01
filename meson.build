@@ -1,5 +1,5 @@
 project('gdm', 'c',
-  version: '50.1',
+  version: '51.alpha',
   license: 'GPL2+',
   meson_version: '>= 0.57',
 )
@@ -249,6 +249,7 @@ conf.set('HAVE_UT_UT_USER', utmp_has_user_field)
 conf.set('HAVE_UT_UT_TIME', utmp_has_time_field)
 conf.set('HAVE_UT_UT_TV', utmp_has_tv_field)
 conf.set('HAVE_UT_UT_SYSLEN', utmp_has_syslen_field)
+conf.set('HAVE_SYS_FSUID_H', cc.has_header('sys/fsuid.h'))
 conf.set('HAVE_SYS_SOCKIO_H', cc.has_header('sys/sockio.h'))
 configure_file(output: 'config.h', configuration: conf)
 
@@ -266,7 +267,6 @@ subdir('po')
 if libcheck_dep.found()
   subdir('tests')
 endif
-subdir('docs')
 
 gnome.post_install(
   glib_compile_schemas: true,

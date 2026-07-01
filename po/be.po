@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gdm.master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gdm/issues/\n"
-"POT-Creation-Date: 2026-03-13 22:31+0000\n"
-"PO-Revision-Date: 2026-05-14 11:45+0300\n"
+"POT-Creation-Date: 2026-04-13 11:45+0000\n"
+"PO-Revision-Date: 2026-05-14 11:51+0300\n"
 "Last-Translator: Yuras Shumovich <shumovichy@gmail.com>\n"
 "Language-Team: Belarusian <i18n-bel-gnome@googlegroups.com>\n"
 "Language: be\n"
@@ -80,7 +80,7 @@ msgstr "Прылада адлюстравання"
 msgid "Could not create authentication helper process"
 msgstr "Не ўдалося стварыць дапаможны працэс для праверкі сапраўднасці"
 
-#: daemon/gdm-session-worker.c:807
+#: daemon/gdm-session-worker.c:810
 msgid ""
 "You reached the maximum password authentication attempts, please try another "
 "method"
@@ -88,13 +88,13 @@ msgstr ""
 "Вы дасягнулі ліміту спроб на пацвярджэнне сапраўднасці праз пароль, "
 "паспрабуйце іншы метад"
 
-#: daemon/gdm-session-worker.c:810
+#: daemon/gdm-session-worker.c:813
 msgid ""
 "You reached the maximum auto login attempts, please try another "
 "authentication method"
 msgstr "Вы дасягнулі ліміту спроб для аўтаўваходу, паспрабуйце іншы метад"
 
-#: daemon/gdm-session-worker.c:813
+#: daemon/gdm-session-worker.c:816
 msgid ""
 "You reached the maximum fingerprint authentication attempts, please try "
 "another method"
@@ -102,7 +102,7 @@ msgstr ""
 "Вы дасягнулі ліміту спроб на пацвярджэнне сапраўднасці праз адбітак пальца, "
 "паспрабуйце іншы метад"
 
-#: daemon/gdm-session-worker.c:816
+#: daemon/gdm-session-worker.c:819
 msgid ""
 "You reached the maximum smart card authentication attempts, please try "
 "another method"
@@ -110,48 +110,48 @@ msgstr ""
 "Вы дасягнулі ліміту спроб на пацвярджэнне сапраўднасці праз смарт-карту, "
 "паспрабуйце іншы метад"
 
-#: daemon/gdm-session-worker.c:818
+#: daemon/gdm-session-worker.c:821
 msgid ""
 "You reached the maximum authentication attempts, please try another method"
 msgstr ""
 "Вы дасягнулі ліміту спроб на пацвярджэнне сапраўднасці, паспрабуйце іншы "
 "метад"
 
-#: daemon/gdm-session-worker.c:825
+#: daemon/gdm-session-worker.c:828
 msgid "Sorry, password authentication didn’t work. Please try again."
 msgstr "Не ўдалося пацвердзіць сапраўднасць паролем. Паўтарыце спробу."
 
-#: daemon/gdm-session-worker.c:828
+#: daemon/gdm-session-worker.c:831
 msgid "Sorry, auto login didn’t work. Please try again."
 msgstr "Аўтаўваход не спрацаваў. Паўтарыце спробу."
 
-#: daemon/gdm-session-worker.c:831
+#: daemon/gdm-session-worker.c:834
 msgid "Sorry, fingerprint authentication didn’t work. Please try again."
 msgstr ""
 "Не ўдалося пацвердзіць сапраўднасць праз адбітак пальца. Паўтарыце спробу."
 
-#: daemon/gdm-session-worker.c:834
+#: daemon/gdm-session-worker.c:837
 msgid "Sorry, smart card authentication didn’t work. Please try again."
 msgstr ""
 "Не ўдалося пацвердзіць сапраўднасць праз смарт-карту. Паўтарыце спробу."
 
-#: daemon/gdm-session-worker.c:836
+#: daemon/gdm-session-worker.c:839
 msgid "Sorry, that didn’t work. Please try again."
 msgstr "Не ўдалося пацвердзіць сапраўднасць. Паўтарыце спробу."
 
-#: daemon/gdm-session-worker.c:851
+#: daemon/gdm-session-worker.c:854
 msgid "Your account was given a time limit that’s now passed."
 msgstr "Тэрмін дзеяння ўліковага запісу скончыўся."
 
-#: daemon/gdm-session-worker.c:1208
+#: daemon/gdm-session-worker.c:1211
 msgid "Username:"
 msgstr "Імя карыстальніка:"
 
-#: daemon/gdm-session-worker.c:1628 daemon/gdm-session-worker.c:1645
+#: daemon/gdm-session-worker.c:1631 daemon/gdm-session-worker.c:1648
 msgid "no user account available"
 msgstr "уліковы запіс карыстальніка недаступны"
 
-#: daemon/gdm-session-worker.c:1672
+#: daemon/gdm-session-worker.c:1675
 msgid "Unable to change to user"
 msgstr "Не ўдалося змяніць карыстальніка"
 
