@@ -82,7 +82,7 @@ Suggests: orca,
           libpam-pkcs11,
           libpam-gnome-keyring
 Provides: x-display-manager
-Breaks: gnome-remote-desktop (<< 50~rc)
+Breaks: gnome-remote-desktop (<< 51~)
 Description: GNOME Display Manager
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
