@@ -134,6 +134,7 @@ struct _GdmSession
         GStrv                supported_session_types;
 
         char                *remote_id;
+        char                *session_id_of_caller;
 
         guint32              is_program_session : 1;
         guint32              display_is_initial : 1;
@@ -155,6 +156,7 @@ enum {
         PROP_CONVERSATION_ENVIRONMENT,
         PROP_SUPPORTED_SESSION_TYPES,
         PROP_REMOTE_ID,
+        PROP_SESSION_ID_OF_CALLER,
 };
 
 enum {
@@ -441,6 +443,13 @@ load_key_file_for_file (GdmSession   *self,
         gboolean    res;
         char      **search_dirs;
 
+        g_return_val_if_fail (file != NULL, NULL);
+
+        if (strchr (file, '/') != NULL) {
+                g_warning ("GdmSession: rejecting session file with path separator: %s", file);
+                return NULL;
+        }
+
         key_file = g_key_file_new ();
 
         search_dirs = get_system_session_dirs (self, type);
@@ -605,8 +614,10 @@ get_default_language_name (GdmSession *self)
 static const char *
 get_fallback_session_name (GdmSession *self)
 {
+        gboolean        res;
         char          **search_dirs;
         int             i;
+        g_autofree char *configured_fallback = NULL;
         char           *name;
         GSequence      *sessions;
         GSequenceIter  *session;
@@ -618,7 +629,13 @@ get_fallback_session_name (GdmSession *self)
                 }
         }
 
-        name = g_strdup ("gnome");
+        res = gdm_settings_direct_get_string (GDM_KEY_FALLBACK_SESSION, &configured_fallback);
+        if (res && (configured_fallback != NULL && configured_fallback[0] != '\0')) {
+                name = g_steal_pointer (&configured_fallback);
+        } else {
+                name = g_strdup ("gnome");
+        }
+
         if (get_session_command_for_name (self, name, NULL, NULL)) {
                 g_free (self->fallback_session_name);
                 self->fallback_session_name = name;
@@ -1808,6 +1825,8 @@ gdm_session_handle_client_begin_auto_login (GdmDBusGreeter        *greeter_inter
                                             GdmSession            *self)
 {
         const char *session_username;
+        g_autofree char *allowed = NULL;
+        gboolean enabled = FALSE;
 
         if (gdm_session_is_running (self)) {
                 session_username = gdm_session_get_username (self);
@@ -1820,6 +1839,19 @@ gdm_session_handle_client_begin_auto_login (GdmDBusGreeter        *greeter_inter
                                                        G_DBUS_ERROR_INVALID_ARGS,
                                                        "Session already owned by user %s",
                                                        session_username);
+                return TRUE;
+        }
+
+        gdm_settings_direct_get_boolean (GDM_KEY_AUTO_LOGIN_ENABLE, &enabled);
+        gdm_settings_direct_get_string (GDM_KEY_AUTO_LOGIN_USER, &allowed);
+        if (!enabled || allowed == NULL || g_strcmp0 (allowed, username) != 0) {
+                g_debug ("GdmSession: refusing auto login for user '%s' (enabled=%d, allowed=%s)",
+                         username, enabled, allowed ? allowed : "(null)");
+                g_dbus_method_invocation_return_error (invocation,
+                                                       G_DBUS_ERROR,
+                                                       G_DBUS_ERROR_ACCESS_DENIED,
+                                                       "Autologin not permitted for user %s",
+                                                       username);
                 return TRUE;
         }
 
@@ -2573,6 +2605,9 @@ initialize (GdmSession *self,
         if (self->display_seat_id != NULL)
                 g_variant_builder_add_parsed (&details, "{'seat-id', <%s>}", self->display_seat_id);
 
+        if (self->session_id_of_caller != NULL)
+                g_variant_builder_add_parsed (&details, "{'session-id-of-caller', <%s>}", self->session_id_of_caller);
+
         g_debug ("GdmSession: Beginning initialization");
 
         conversation = find_conversation_by_name (self, service_name);
@@ -2744,7 +2779,8 @@ get_session_name (GdmSession *self)
 }
 
 static char *
-get_session_command (GdmSession *self)
+get_session_command (GdmSession  *self,
+                     GError     **error)
 {
         gboolean    res;
         char       *command;
@@ -2755,8 +2791,12 @@ get_session_command (GdmSession *self)
         command = NULL;
         res = get_session_command_for_name (self, session_name, NULL, &command);
         if (! res) {
-                g_critical ("Cannot find a command for specified session: %s", session_name);
-                exit (EXIT_FAILURE);
+                g_set_error (error,
+                             G_IO_ERROR,
+                             G_IO_ERROR_NOT_FOUND,
+                             "Cannot find a command for specified session: %s",
+                             session_name);
+                return NULL;
         }
 
         return command;
@@ -3025,6 +3065,7 @@ gdm_session_start_session (GdmSession *self,
         GdmSessionConversation *conversation;
         g_autofree char        *command = NULL;
         g_autofree char        *program = NULL;
+        g_autoptr(GError)       error = NULL;
 
         g_return_if_fail (GDM_IS_SESSION (self));
         g_return_if_fail (service_name != NULL);
@@ -3040,7 +3081,16 @@ gdm_session_start_session (GdmSession *self,
 
         stop_all_other_conversations (self, conversation, FALSE);
 
-        command = get_session_command (self);
+        command = get_session_command (self, &error);
+
+        if (command == NULL) {
+                gdm_session_stop_conversation (self, service_name);
+
+                g_debug ("GdmSession: Emitting 'session-start-failed' signal");
+                g_signal_emit (self, signals[SESSION_START_FAILED], 0, service_name,
+                               error->message);
+                return;
+        }
 
         if (g_strcmp0 (self->session_type, "wayland") == 0) {
                 gboolean needs_registration = !gdm_session_session_registers (self);
@@ -3280,6 +3330,7 @@ gdm_session_start_reauthentication (GdmSession *self,
         gdm_dbus_worker_call_start_reauthentication (conversation->worker_proxy,
                                                      (int) pid_of_caller,
                                                      (int) uid_of_caller,
+                                                     self->session_id_of_caller ? self->session_id_of_caller : "",
                                                      conversation->worker_cancellable,
                                                      (GAsyncReadyCallback) on_reauthentication_started_cb,
                                                      conversation);
@@ -3585,6 +3636,14 @@ set_remote_id (GdmSession *self,
 }
 
 static void
+set_session_id_of_caller (GdmSession *self,
+                          const char *session_id_of_caller)
+{
+        g_free (self->session_id_of_caller);
+        self->session_id_of_caller = g_strdup (session_id_of_caller);
+}
+
+static void
 gdm_session_set_property (GObject      *object,
                           guint         prop_id,
                           const GValue *value,
@@ -3627,6 +3686,9 @@ gdm_session_set_property (GObject      *object,
                 break;
         case PROP_REMOTE_ID:
                 set_remote_id (self, g_value_get_string (value));
+                break;
+        case PROP_SESSION_ID_OF_CALLER:
+                set_session_id_of_caller (self, g_value_get_string (value));
                 break;
         default:
                 G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -3678,6 +3740,9 @@ gdm_session_get_property (GObject    *object,
         case PROP_REMOTE_ID:
                 g_value_set_string (value, self->remote_id);
                 break;
+        case PROP_SESSION_ID_OF_CALLER:
+                g_value_set_string (value, self->session_id_of_caller);
+                break;
         default:
                 G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
                 break;
@@ -3716,6 +3781,9 @@ gdm_session_dispose (GObject *object)
 
         g_strfreev (self->conversation_environment);
         self->conversation_environment = NULL;
+
+        g_free (self->session_id_of_caller);
+        self->session_id_of_caller = NULL;
 
         if (self->worker_server != NULL) {
                 g_dbus_server_stop (self->worker_server);
@@ -4098,6 +4166,14 @@ gdm_session_class_init (GdmSessionClass *session_class)
                                          g_param_spec_string ("remote-id",
                                                               "remote id",
                                                               "remote id",
+                                                              NULL,
+                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+
+        g_object_class_install_property (object_class,
+                                         PROP_SESSION_ID_OF_CALLER,
+                                         g_param_spec_string ("session-id-of-caller",
+                                                              "session id of caller",
+                                                              "session id of caller",
                                                               NULL,
                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 

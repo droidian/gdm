@@ -96,9 +96,29 @@ pam_data_files = pam_data_files_map.get(default_pam_config, [])
 foreach _pam_filename : pam_data_files
   install_data('pam-@0@/@1@.pam'.format(default_pam_config, _pam_filename),
     rename: _pam_filename,
-    install_dir: pam_profiles_dir,
+    install_dir: pam_sys_services_dir,
   )
 endforeach
+
+if default_pam_config == 'redhat'
+  pam_substack_services = [
+    'password-auth',
+    'smartcard-auth',
+    'fingerprint-auth',
+    'switchable-auth',
+  ]
+  foreach service : pam_substack_services
+    pam_conf = configuration_data()
+    pam_conf.set('PAM_SERVICE', service)
+    configure_file(
+      input: 'pam-redhat/gdm-service-auth-substack.pam.in',
+      output: 'gdm-@0@-substack'.format(service),
+      configuration: pam_conf,
+      install: true,
+      install_dir: pam_sys_services_dir,
+    )
+  endforeach
+endif
 
 # DBus service files
 service_config = configuration_data()
