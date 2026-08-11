@@ -8,7 +8,6 @@ usr/libexec/gdm-*
 # gets renamed to gdm3 in binary-install
 usr/sbin/gdm
 usr/share/locale/
-usr/share/help/
 usr/share/gdm/
 usr/share/gnome-session/
 usr/share/dconf/
