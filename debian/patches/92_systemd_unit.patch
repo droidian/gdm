@@ -16,7 +16,7 @@ Forwarded: no
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/data/gdm.service.in b/data/gdm.service.in
-index 17e8a8d..1214c3f 100644
+index 398aaff..4b93ede 100644
 --- a/data/gdm.service.in
 +++ b/data/gdm.service.in
 @@ -20,12 +20,15 @@ After=rc-local.service plymouth-start.service systemd-user-sessions.service
