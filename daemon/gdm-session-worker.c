@@ -113,6 +113,8 @@
 #define RELEASE_DISPLAY_SIGNAL (SIGRTMAX)
 #define ACQUIRE_DISPLAY_SIGNAL (SIGRTMAX - 1)
 
+#define GDM_AUTH_SESSION_ID "GDM_AUTH_SESSION_ID"
+
 typedef struct
 {
         GdmSessionWorker *worker;
@@ -142,6 +144,7 @@ struct _GdmSessionWorker
         char             *username;
         char             *log_file;
         char             *session_id;
+        char             *session_id_of_caller;
         uid_t             uid;
         gid_t             gid;
         gboolean          password_is_required;
@@ -590,7 +593,6 @@ gdm_session_worker_process_custom_json_protocol (GdmSessionWorker            *wo
 {
         g_autoptr(GError) error = NULL;
         g_autoptr(JsonParser) parser = NULL;
-        g_autofree char *json_reply = NULL;
 
         g_debug ("GdmSessionWorker: sending custom JSON protocol request: %s v%d",
                  request->protocol_name, request->version);
@@ -640,54 +642,55 @@ gdm_session_worker_process_extended_pam_message (GdmSessionWorker          *work
         GdmPamExtensionMessage *extended_message;
         gboolean res;
 
-        extended_message = GDM_PAM_EXTENSION_MESSAGE_FROM_PAM_MESSAGE (query);
+        extended_message = gdm_pam_extension_message_from_pam_message (query);
 
-        if (GDM_PAM_EXTENSION_MESSAGE_TRUNCATED (extended_message)) {
+        if (gdm_pam_extension_message_truncated (extended_message)) {
                 g_warning ("PAM service requested binary response for truncated query");
                 return FALSE;
         }
 
-        if (GDM_PAM_EXTENSION_MESSAGE_INVALID_TYPE (extended_message)) {
+        if (gdm_pam_extension_message_invalid_type (extended_message)) {
                 g_warning ("PAM service requested binary response for unadvertised query type");
                 return FALSE;
         }
 
-        if (GDM_PAM_EXTENSION_MESSAGE_MATCH (extended_message, worker->extensions, GDM_PAM_EXTENSION_CHOICE_LIST)) {
+        if (gdm_pam_extension_message_match (extended_message, worker->extensions, GDM_PAM_EXTENSION_CHOICE_LIST)) {
+                g_autoptr(GdmPamExtensionChoiceListResponse) list_response = NULL;
                 GdmPamExtensionChoiceListRequest *list_request = (GdmPamExtensionChoiceListRequest *) extended_message;
-                GdmPamExtensionChoiceListResponse *list_response = malloc (GDM_PAM_EXTENSION_CHOICE_LIST_RESPONSE_SIZE);
+
+                list_response = malloc (GDM_PAM_EXTENSION_CHOICE_LIST_RESPONSE_SIZE);
                 if (list_response == NULL)
                         return FALSE;
 
                 g_debug ("GdmSessionWorker: received extended pam message '%s'", GDM_PAM_EXTENSION_CHOICE_LIST);
 
-                GDM_PAM_EXTENSION_CHOICE_LIST_RESPONSE_INIT (list_response);
+                gdm_pam_extension_choice_list_response_init (list_response);
 
                 res = gdm_session_worker_process_choice_list_request (worker, list_request, list_response);
 
-                if (! res) {
-                        free (list_response);
+                if (!res)
                         return FALSE;
-                }
 
-                *response = GDM_PAM_EXTENSION_MESSAGE_TO_PAM_REPLY (list_response);
+                *response = gdm_pam_extension_message_to_pam_reply (g_steal_pointer (&list_response));
                 return TRUE;
-        } else if (GDM_PAM_EXTENSION_MESSAGE_MATCH (extended_message, worker->extensions, GDM_PAM_EXTENSION_CUSTOM_JSON)) {
+        } else if (gdm_pam_extension_message_match (extended_message, worker->extensions, GDM_PAM_EXTENSION_CUSTOM_JSON)) {
+                g_autoptr(GdmPamExtensionJSONProtocol) json_response = NULL;
                 GdmPamExtensionJSONProtocol *json_request = (GdmPamExtensionJSONProtocol *) extended_message;
-                g_autofree GdmPamExtensionJSONProtocol *json_response = malloc (GDM_PAM_EXTENSION_CUSTOM_JSON_SIZE);
+
+                json_response = malloc (GDM_PAM_EXTENSION_CUSTOM_JSON_SIZE);
                 if (json_response == NULL)
                         return FALSE;
 
                 g_debug ("GdmSessionWorker: received extended pam message '%s'", GDM_PAM_EXTENSION_CUSTOM_JSON);
 
-                GDM_PAM_EXTENSION_CUSTOM_JSON_RESPONSE_INIT (json_response,
-                                                              json_request->protocol_name,
-                                                              json_request->version);
+                gdm_pam_extension_custom_json_response_init (json_response,
+                                                             json_request->protocol_name,
+                                                             json_request->version);
 
-                if (!gdm_session_worker_process_custom_json_protocol (worker, json_request, json_response)) {
+                if (!gdm_session_worker_process_custom_json_protocol (worker, json_request, json_response))
                         return FALSE;
-                }
 
-                *response = GDM_PAM_EXTENSION_MESSAGE_TO_PAM_REPLY (g_steal_pointer (&json_response));
+                *response = gdm_pam_extension_message_to_pam_reply (g_steal_pointer (&json_response));
                 return TRUE;
         } else {
                 g_debug ("GdmSessionWorker: received extended pam message of unknown type %u", (unsigned int) extended_message->type);
@@ -799,7 +802,7 @@ gdm_session_worker_process_pam_message (GdmSessionWorker          *worker,
                         *response = strndup (user_answer, PAM_MAX_RESP_SIZE - 1);
                 }
 
-                memset (user_answer, '\0', strlen (user_answer));
+                gdm_pam_extension_zero_buffer (user_answer, strlen (user_answer));
 
                 g_debug ("GdmSessionWorker: trying to get updated username");
 
@@ -870,6 +873,36 @@ get_friendly_error_message (GdmSessionWorker *worker,
         return get_generic_error_message (worker);
 }
 
+static void
+gdm_session_worker_clear_pam_response (GdmSessionWorker         *worker,
+                                       const struct pam_message *message,
+                                       struct pam_response      *reply)
+{
+        if (reply->resp == NULL)
+                return;
+
+#ifdef SUPPORTS_PAM_EXTENSIONS
+        if (message->msg_style == PAM_BINARY_PROMPT) {
+                GdmPamExtensionMessage *extended_message;
+                extended_message = gdm_pam_extension_message_from_pam_message (message);
+
+                if (gdm_pam_extension_message_match (extended_message, worker->extensions, GDM_PAM_EXTENSION_CHOICE_LIST)) {
+                        gdm_pam_extension_choice_list_response_free (
+                                gdm_pam_extension_reply_to_choice_list_response (reply));
+                } else if (gdm_pam_extension_message_match (extended_message, worker->extensions, GDM_PAM_EXTENSION_CUSTOM_JSON)) {
+                        gdm_pam_extension_custom_json_response_free (
+                                gdm_pam_extension_reply_to_custom_json_response (reply));
+                } else {
+                        free (reply->resp);
+                }
+                return;
+        }
+#endif
+
+        gdm_pam_extension_zero_buffer (reply->resp, strlen (reply->resp));
+        free (reply->resp);
+}
+
 static int
 gdm_session_worker_pam_new_messages_handler (int                        number_of_messages,
                                              const struct pam_message **messages,
@@ -924,10 +957,9 @@ gdm_session_worker_pam_new_messages_handler (int                        number_o
  out:
         if (return_value != PAM_SUCCESS || responses == NULL) {
                 for (i = 0; i < number_of_messages; i++) {
-                        if (replies[i].resp != NULL) {
-                                memset (replies[i].resp, 0, strlen (replies[i].resp));
-                                free (replies[i].resp);
-                        }
+                        gdm_session_worker_clear_pam_response (worker,
+                                                               messages[i],
+                                                               &replies[i]);
                         memset (&replies[i], 0, sizeof (replies[i]));
                 }
                 free (replies);
@@ -1168,6 +1200,24 @@ gdm_session_worker_uninitialize_pam (GdmSessionWorker *worker,
         gdm_session_worker_set_state (worker, GDM_SESSION_WORKER_STATE_NONE);
 }
 
+static gchar *
+gdm_session_worker_resolve_service_file (const char *service)
+{
+        g_autofree char *service_path = NULL;
+
+        g_set_str (&service_path, g_build_filename (PAM_CONFIG_SERVICES_DIR, service, NULL));
+        if (g_file_test (service_path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
+                return g_steal_pointer (&service_path);
+        }
+
+        g_set_str (&service_path, g_build_filename (PAM_SYS_SERVICES_DIR, service, NULL));
+        if (g_file_test (service_path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
+                return g_steal_pointer (&service_path);
+        }
+
+        return NULL;
+}
+
 static gboolean
 gdm_session_worker_initialize_pam (GdmSessionWorker   *worker,
                                    const char         *service,
@@ -1182,6 +1232,7 @@ gdm_session_worker_initialize_pam (GdmSessionWorker   *worker,
         struct pam_conv        pam_conversation;
         int                    error_code;
         char tty_string[256];
+        g_autofree char *service_path = NULL;
 
         g_assert (service != NULL);
         g_assert (worker->pam_handle == NULL);
@@ -1191,9 +1242,30 @@ gdm_session_worker_initialize_pam (GdmSessionWorker   *worker,
                  username ? username : "(null)",
                  seat_id ? seat_id : "(null)");
 
+        service_path = gdm_session_worker_resolve_service_file (service);
+        if (!service_path) {
+                g_debug ("GdmSessionWorker: PAM profile %s was not found", service);
+                g_set_error (error,
+                             GDM_SESSION_WORKER_ERROR,
+                             GDM_SESSION_WORKER_ERROR_SERVICE_UNAVAILABLE,
+                             "PAM profile %s was not found", service);
+
+                /* There is not a specific error for service not found, so we just
+                 * error out as the module is missing, although this is not really
+                 * used since no pam handle is set, thus it's just used to keep
+                 * the same "out" logic.
+                 */
+                error_code = PAM_MODULE_UNKNOWN;
+                goto out;
+        }
+
+        g_debug ("GdmSessionWorker: using PAM profile %s", service_path);
+
 #ifdef SUPPORTS_PAM_EXTENSIONS
         if (extensions != NULL) {
-                GDM_PAM_EXTENSION_ADVERTISE_SUPPORTED_EXTENSIONS (gdm_pam_extension_environment_block, extensions);
+                gdm_pam_extension_advertise_supported_extensions (gdm_pam_extension_environment_block,
+                                                                  sizeof (gdm_pam_extension_environment_block),
+                                                                  extensions);
         }
 #endif
 
@@ -1201,7 +1273,7 @@ gdm_session_worker_initialize_pam (GdmSessionWorker   *worker,
         pam_conversation.appdata_ptr = worker;
 
         gdm_session_worker_start_auditor (worker);
-        error_code = pam_start (service,
+        error_code = pam_start (service_path,
                                 username,
                                 &pam_conversation,
                                 &worker->pam_handle);
@@ -1267,6 +1339,10 @@ gdm_session_worker_initialize_pam (GdmSessionWorker   *worker,
 
         if (strcmp (service, "gdm-launch-environment") == 0) {
                 gdm_session_worker_set_environment_variable (worker, "XDG_SESSION_CLASS", "greeter");
+        }
+
+        if (worker->session_id_of_caller != NULL) {
+                setenv (GDM_AUTH_SESSION_ID, worker->session_id_of_caller, 1);
         }
 
         g_debug ("GdmSessionWorker: state SETUP_COMPLETE");
@@ -1352,6 +1428,9 @@ gdm_session_worker_authenticate_user (GdmSessionWorker *worker,
                                      get_friendly_error_message (worker, error_code));
                 goto out;
         }
+
+        gdm_session_worker_set_environment_variable (worker, GDM_AUTH_SESSION_ID, NULL);
+        unsetenv (GDM_AUTH_SESSION_ID);
 
         g_debug ("GdmSessionWorker: state AUTHENTICATED");
         gdm_session_worker_set_state (worker, GDM_SESSION_WORKER_STATE_AUTHENTICATED);
@@ -2905,6 +2984,8 @@ gdm_session_worker_handle_initialize (GdmDBusWorker         *object,
                         worker->display_is_local = g_variant_get_boolean (value);
                 } else if (g_strcmp0 (key, "display-is-initial") == 0) {
                         worker->display_is_initial = g_variant_get_boolean (value);
+                } else if (g_strcmp0 (key, "session-id-of-caller") == 0) {
+                        worker->session_id_of_caller = g_variant_dup_string (value, NULL);
                 }
         }
 
@@ -2957,7 +3038,9 @@ gdm_session_worker_handle_start_program (GdmDBusWorker         *object,
 {
         GdmSessionWorker *worker = GDM_SESSION_WORKER (object);
         g_autoptr(GError) parse_error = NULL;
-        validate_state_change (worker, invocation, GDM_SESSION_WORKER_STATE_SESSION_STARTED);
+
+        if (!validate_state_change (worker, invocation, GDM_SESSION_WORKER_STATE_SESSION_STARTED))
+                return TRUE;
 
         if (worker->is_reauth_session) {
                 g_dbus_method_invocation_return_error (invocation,
@@ -3054,6 +3137,7 @@ static ReauthenticationRequest *
 reauthentication_request_new (GdmSessionWorker      *worker,
                               GPid                   pid_of_caller,
                               uid_t                  uid_of_caller,
+                              const char            *session_id_of_caller,
                               GDBusMethodInvocation *invocation)
 {
         ReauthenticationRequest *request;
@@ -3074,6 +3158,9 @@ reauthentication_request_new (GdmSessionWorker      *worker,
                                             worker->display_seat_id,
                                             worker->display_is_local,
                                             environment);
+
+        if (session_id_of_caller != NULL && session_id_of_caller[0] != '\0')
+                g_object_set (request->session, "session-id-of-caller", session_id_of_caller, NULL);
 
         g_signal_connect (request->session,
                           "client-connected",
@@ -3113,7 +3200,8 @@ static gboolean
 gdm_session_worker_handle_start_reauthentication (GdmDBusWorker         *object,
                                                   GDBusMethodInvocation *invocation,
                                                   int                    pid_of_caller,
-                                                  int                    uid_of_caller)
+                                                  int                    uid_of_caller,
+                                                  const char            *session_id_of_caller)
 {
         GdmSessionWorker *worker = GDM_SESSION_WORKER (object);
         ReauthenticationRequest *request;
@@ -3129,7 +3217,11 @@ gdm_session_worker_handle_start_reauthentication (GdmDBusWorker         *object,
 
         g_debug ("GdmSessionWorker: start reauthentication");
 
-        request = reauthentication_request_new (worker, pid_of_caller, uid_of_caller, invocation);
+        request = reauthentication_request_new (worker,
+                                                pid_of_caller,
+                                                uid_of_caller,
+                                                session_id_of_caller,
+                                                invocation);
         g_hash_table_replace (worker->reauthentication_requests,
                               GINT_TO_POINTER (pid_of_caller),
                               request);
@@ -3310,6 +3402,7 @@ gdm_session_worker_finalize (GObject *object)
         g_free (worker->display_seat_id);
         g_free (worker->hostname);
         g_free (worker->username);
+        g_free (worker->session_id_of_caller);
         g_free (worker->server_address);
         g_strfreev (worker->arguments);
         g_strfreev (worker->extensions);
