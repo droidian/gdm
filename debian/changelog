@@ -1,6 +1,16 @@
 gdm3 (51~beta-1) UNRELEASED; urgency=medium
 
+  [ Marco Trevisan (Treviño) ]
   * New upstream release
+  * debian/gdm3.install: Drop help files.
+    They are not provided by upstream anymore as they were outdated.
+
+  [ Alessandro Astone ]
+  * d/control: Breaks gnome-remote-desktop older than 51
+
+  [ Simon McVittie ]
+  * Merge packaging changes from unstable
+    - Revert "d/gbp.conf, d/control, d/watch: Branch for 50.x"
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 11 Aug 2026 23:52:02 +0200
 
