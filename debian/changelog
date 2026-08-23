@@ -4,6 +4,14 @@ gdm3 (51~beta-1) UNRELEASED; urgency=medium
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 11 Aug 2026 23:52:02 +0200
 
+gdm3 (50.2-1) unstable; urgency=medium
+
+  * Team upload
+  * d/gbp.conf, d/control, d/watch: Branch for 50.x
+  * New upstream release
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 23 Aug 2026 13:27:57 +0100
+
 gdm3 (50.1-2) unstable; urgency=medium
 
   * Team upload
