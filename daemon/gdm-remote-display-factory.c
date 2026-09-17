@@ -49,6 +49,19 @@ static gpointer remote_display_factory_object = NULL;
 G_DEFINE_TYPE (GdmRemoteDisplayFactory, gdm_remote_display_factory, GDM_TYPE_DISPLAY_FACTORY)
 
 static gboolean
+lookup_by_autologin_user (const char *id,
+                          GdmDisplay *display,
+                          gpointer    user_data)
+{
+        const char *autologin_user = user_data;
+        g_autofree char *display_autologin_user = NULL;
+
+        g_object_get (display, "autologin-user", &display_autologin_user, NULL);
+
+        return g_strcmp0 (autologin_user, display_autologin_user) == 0;
+}
+
+static gboolean
 gdm_remote_display_factory_create_display (GdmRemoteDisplayFactory *factory,
                                            const char              *autologin_user,
                                            const char              *remote_id,
@@ -56,6 +69,24 @@ gdm_remote_display_factory_create_display (GdmRemoteDisplayFactory *factory,
 {
         g_autoptr (GdmDisplay) display = NULL;
         GdmDisplayStore *store;
+
+        store = gdm_display_factory_get_display_store (GDM_DISPLAY_FACTORY (factory));
+
+        if (autologin_user != NULL && remote_id != NULL) {
+                GdmDisplay *existing_display;
+
+                existing_display = gdm_display_store_find (store,
+                                                           lookup_by_autologin_user,
+                                                           (gpointer) autologin_user);
+
+                if (existing_display != NULL && GDM_IS_REMOTE_DISPLAY (existing_display)) {
+                        g_debug ("GdmRemoteDisplayFactory: Found existing remote display for "
+                                 "autologin user '%s', reusing it", autologin_user);
+
+                        gdm_remote_display_set_remote_id (GDM_REMOTE_DISPLAY (existing_display), remote_id);
+                        return TRUE;
+                }
+        }
 
         g_debug ("GdmRemoteDisplayFactory: Creating remote display");
 
@@ -66,7 +97,6 @@ gdm_remote_display_factory_create_display (GdmRemoteDisplayFactory *factory,
                       "autologin-user", autologin_user,
                       NULL);
 
-        store = gdm_display_factory_get_display_store (GDM_DISPLAY_FACTORY (factory));
         gdm_display_store_add (store, display);
 
         if (!gdm_display_prepare (display)) {
@@ -85,6 +115,7 @@ handle_create_remote_display (GdmDBusRemoteDisplayFactory *skeleton,
 {
         g_autofree char *remote_id = NULL;
         g_autofree char *remote_hostname = NULL;
+        g_autofree char *preauthenticated_user = NULL;
 
         g_variant_lookup (properties, "remote-id", "o", &remote_id);
         if (!remote_id) {
@@ -96,8 +127,12 @@ handle_create_remote_display (GdmDBusRemoteDisplayFactory *skeleton,
         }
 
         g_variant_lookup (properties, "hostname", "s", &remote_hostname);
+        g_variant_lookup (properties, "preauthenticated-user", "s", &preauthenticated_user);
 
-        if (!gdm_remote_display_factory_create_display (factory, NULL, remote_id, remote_hostname))
+        if (!gdm_remote_display_factory_create_display (factory,
+                                                        preauthenticated_user,
+                                                        remote_id,
+                                                        remote_hostname))
                 g_dbus_method_invocation_return_error_literal (invocation,
                                                                G_DBUS_ERROR,
                                                                G_DBUS_ERROR_FAILED,

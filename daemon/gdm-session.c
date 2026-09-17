@@ -133,7 +133,6 @@ struct _GdmSession
 
         GStrv                supported_session_types;
 
-        char                *remote_id;
         char                *session_id_of_caller;
 
         guint32              is_program_session : 1;
@@ -155,7 +154,6 @@ enum {
         PROP_DISPLAY_SEAT_ID,
         PROP_CONVERSATION_ENVIRONMENT,
         PROP_SUPPORTED_SESSION_TYPES,
-        PROP_REMOTE_ID,
         PROP_SESSION_ID_OF_CALLER,
 };
 
@@ -1265,6 +1263,7 @@ register_worker (GdmDBusWorkerManager  *worker_manager_interface,
                                                                G_DBUS_ERROR_ACCESS_DENIED,
                                                                "Connection is not from a known conversation");
                 g_dbus_connection_close_sync (connection, NULL, NULL);
+                g_object_unref (connection);
                 return TRUE;
         }
 
@@ -3132,21 +3131,52 @@ free_pending_worker_connection (GdmSession      *self,
                                    NULL);
         }
 
+        g_signal_handlers_disconnect_by_func (connection,
+                                              G_CALLBACK (on_worker_connection_closed),
+                                              self);
+
         g_object_unref (connection);
 }
 
 static void
 free_pending_worker_connections (GdmSession *self)
 {
+        g_autoptr (GList) connections = NULL;
         GList *node;
 
-        for (node = self->pending_worker_connections; node != NULL; node = node->next) {
+        connections = g_steal_pointer (&self->pending_worker_connections);
+
+        for (node = connections; node != NULL; node = node->next) {
                 GDBusConnection *connection = node->data;
 
                 free_pending_worker_connection (self, connection);
         }
-        g_list_free (self->pending_worker_connections);
-        self->pending_worker_connections = NULL;
+}
+
+static void
+free_outside_connection (GdmSession      *self,
+                         GDBusConnection *connection)
+{
+        g_signal_handlers_disconnect_by_func (connection,
+                                              G_CALLBACK (on_outside_connection_closed),
+                                              self);
+
+        g_object_unref (connection);
+}
+
+static void
+free_outside_connections (GdmSession *self)
+{
+        g_autoptr (GList) connections = NULL;
+        GList *node;
+
+        connections = g_steal_pointer (&self->outside_connections);
+
+        for (node = connections; node != NULL; node = node->next) {
+                GDBusConnection *connection = node->data;
+
+                free_outside_connection (self, connection);
+        }
 }
 
 static void
@@ -3179,14 +3209,12 @@ do_reset (GdmSession *self)
 void
 gdm_session_close (GdmSession *self)
 {
-
         g_return_if_fail (GDM_IS_SESSION (self));
 
         g_debug ("GdmSession: Closing session");
         do_reset (self);
 
-        g_list_free_full (self->outside_connections, g_object_unref);
-        self->outside_connections = NULL;
+        free_outside_connections (self);
 }
 
 void
@@ -3628,14 +3656,6 @@ set_session_type (GdmSession *self,
 }
 
 static void
-set_remote_id (GdmSession *self,
-               const char *remote_id)
-{
-        g_free (self->remote_id);
-        self->remote_id = g_strdup (remote_id);
-}
-
-static void
 set_session_id_of_caller (GdmSession *self,
                           const char *session_id_of_caller)
 {
@@ -3683,9 +3703,6 @@ gdm_session_set_property (GObject      *object,
                 break;
         case PROP_SUPPORTED_SESSION_TYPES:
                 gdm_session_set_supported_session_types (self, g_value_get_boxed (value));
-                break;
-        case PROP_REMOTE_ID:
-                set_remote_id (self, g_value_get_string (value));
                 break;
         case PROP_SESSION_ID_OF_CALLER:
                 set_session_id_of_caller (self, g_value_get_string (value));
@@ -3736,9 +3753,6 @@ gdm_session_get_property (GObject    *object,
                 break;
         case PROP_SUPPORTED_SESSION_TYPES:
                 g_value_set_boxed (value, self->supported_session_types);
-                break;
-        case PROP_REMOTE_ID:
-                g_value_set_string (value, self->remote_id);
                 break;
         case PROP_SESSION_ID_OF_CALLER:
                 g_value_set_string (value, self->session_id_of_caller);
@@ -4160,14 +4174,6 @@ gdm_session_class_init (GdmSessionClass *session_class)
                                                              "supported session types",
                                                              G_TYPE_STRV,
                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-
-        g_object_class_install_property (object_class,
-                                         PROP_REMOTE_ID,
-                                         g_param_spec_string ("remote-id",
-                                                              "remote id",
-                                                              "remote id",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 
         g_object_class_install_property (object_class,
                                          PROP_SESSION_ID_OF_CALLER,

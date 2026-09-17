@@ -65,11 +65,11 @@ gdm_pam_extension_message_to_pam_reply (void *msg)
 }
 
 static inline void
-gdm_pam_extension_message_to_binary_prompt_message (GdmPamExtensionMessage *extended_message,
-                                                    struct pam_message     *binary_message)
+gdm_pam_extension_message_to_binary_prompt_message (void               *extended_message,
+                                                    struct pam_message *binary_message)
 {
         binary_message->msg_style = PAM_BINARY_PROMPT;
-        binary_message->msg = (void *) extended_message;
+        binary_message->msg = extended_message;
 }
 
 static inline bool
@@ -117,6 +117,9 @@ gdm_pam_extension_look_up_type (const char    *name,
         const char *p;
         size_t index = 0;
 
+        if (extension_type)
+                *extension_type = 0;
+
         env = getenv ("GDM_SUPPORTED_PAM_EXTENSIONS");
         if (env == NULL)
                 return false;
@@ -162,12 +165,18 @@ gdm_pam_extension_advertise_supported_extensions (char               *environmen
         size_t offset;
         size_t index;
 
-        if (block_size < key_len + 2)
+        if (environment_block == NULL || block_size < key_len + 2)
                 return;
 
         memcpy (environment_block, key, key_len);
         environment_block[key_len] = '=';
         offset = key_len + 1;
+
+        if (supported_extensions == NULL || supported_extensions[0] == NULL) {
+                environment_block[offset] = '\0';
+                putenv (environment_block);
+                return;
+        }
 
         for (index = 0; supported_extensions[index] != NULL && index < UCHAR_MAX; index++) {
                 size_t ext_len = strlen (supported_extensions[index]);
@@ -183,8 +192,6 @@ gdm_pam_extension_advertise_supported_extensions (char               *environmen
                 offset += ext_len;
         }
 
-        if (index > 0) {
-                environment_block[offset] = '\0';
-                putenv (environment_block);
-        }
+        environment_block[offset] = '\0';
+        putenv (environment_block);
 }
