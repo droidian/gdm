@@ -1,8 +1,9 @@
-gdm3 (50.3-1) UNRELEASED; urgency=medium
+gdm3 (50.3-1) unstable; urgency=medium
 
+  * Team upload
   * New upstream release
 
- -- Simon McVittie <smcv@debian.org>  Thu, 17 Sep 2026 15:07:16 +0100
+ -- Simon McVittie <smcv@debian.org>  Thu, 17 Sep 2026 18:57:00 +0100
 
 gdm3 (50.2-1) unstable; urgency=medium
 
