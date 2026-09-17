@@ -1,4 +1,4 @@
-gdm3 (51~beta-1) UNRELEASED; urgency=medium
+gdm3 (51.0-1) UNRELEASED; urgency=medium
 
   [ Marco Trevisan (Treviño) ]
   * New upstream release
@@ -9,6 +9,7 @@ gdm3 (51~beta-1) UNRELEASED; urgency=medium
   * d/control: Breaks gnome-remote-desktop older than 51
 
   [ Simon McVittie ]
+  * New upstream release
   * Merge packaging changes from unstable
     - Revert "d/gbp.conf, d/control, d/watch: Branch for 50.x"
 
