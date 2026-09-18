@@ -1,4 +1,6 @@
-gdm3 (51.0-1) UNRELEASED; urgency=medium
+gdm3 (51.0-1) experimental; urgency=medium
+
+  * Team upload
 
   [ Marco Trevisan (Treviño) ]
   * New upstream release
@@ -13,7 +15,7 @@ gdm3 (51.0-1) UNRELEASED; urgency=medium
   * Merge packaging changes from unstable
     - Revert "d/gbp.conf, d/control, d/watch: Branch for 50.x"
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 11 Aug 2026 23:52:02 +0200
+ -- Simon McVittie <smcv@debian.org>  Fri, 18 Sep 2026 01:31:44 +0100
 
 gdm3 (50.3-1) unstable; urgency=medium
 
