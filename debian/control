@@ -1,90 +1,98 @@
 Source: gdm3
+X-Style: black
 Standards-Version: 4.7.4
 Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
-Uploaders: Jeremy Bícha <jbicha@ubuntu.com>,
-           Laurent Bigonville <bigon@debian.org>,
-           Marco Trevisan (Treviño) <marco@ubuntu.com>,
+Uploaders:
+ Jeremy Bícha <jbicha@ubuntu.com>,
+ Laurent Bigonville <bigon@debian.org>,
+ Marco Trevisan (Treviño) <marco@ubuntu.com>,
 Section: gnome
-Build-Depends: debhelper-compat (= 13),
-               dh-sequence-gir,
-               dh-sequence-gnome,
-               dh-sequence-installsysusers,
-               check,
-               dconf-cli,
-               docbook-xml,
-               gettext,
-               gir1.2-gio-2.0-dev,
-               gir1.2-glib-2.0-dev,
-               gir1.2-gobject-2.0-dev,
-               gjs [amd64 arm64 armhf i386 loong64 ppc64el riscv64 s390x],
-               gnome-settings-daemon-dev,
-               gobject-introspection (>= 1.80),
-               intltool,
-               iso-codes,
-               itstool,
-               libaccountsservice-dev,
-               libaudit-dev [linux-any],
-               libglib2.0-dev,
-               libgtk-3-dev,
-               libgudev-1.0-dev,
-               libjson-glib-dev,
-               libkeyutils-dev [linux-any],
-               libpam0g-dev,
-               libplymouth-dev [linux-any],
-               libselinux-dev [linux-any],
-               libsystemd-dev (>= 259) [linux-any],
-               libwrap0-dev,
-               libx11-dev,
-               libxau-dev,
-               libxcb1-dev,
-               libxdmcp-dev,
-               meson,
-               pkgconf,
-               systemd-dev (>= 255~rc3-3~),
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-sequence-gir,
+ dh-sequence-gnome,
+ dh-sequence-installsysusers,
+ check,
+ dconf-cli,
+ docbook-xml,
+ gettext,
+ gir1.2-gio-2.0-dev,
+ gir1.2-glib-2.0-dev,
+ gir1.2-gobject-2.0-dev,
+ gjs [amd64 arm64 armhf i386 loong64 ppc64el riscv64 s390x],
+ gnome-settings-daemon-dev,
+ gobject-introspection (>= 1.80),
+ intltool,
+ iso-codes,
+ itstool,
+ libaccountsservice-dev,
+ libaudit-dev [linux-any],
+ libglib2.0-dev,
+ libgtk-3-dev,
+ libgudev-1.0-dev,
+ libjson-glib-dev,
+ libkeyutils-dev [linux-any],
+ libpam0g-dev,
+ libplymouth-dev [linux-any],
+ libselinux-dev [linux-any],
+ libsystemd-dev (>= 259) [linux-any],
+ libwrap0-dev,
+ libx11-dev,
+ libxau-dev,
+ libxcb1-dev,
+ libxdmcp-dev,
+ meson,
+ pkgconf,
+ systemd-dev (>= 255~rc3-3~),
 Vcs-Browser: https://salsa.debian.org/gnome-team/gdm
 Vcs-Git: https://salsa.debian.org/gnome-team/gdm.git
 Homepage: https://wiki.gnome.org/Projects/GDM/
 
 Package: gdm3
 Architecture: amd64 arm64 armhf i386 loong64 ppc64el riscv64 s390x
-Depends: accountsservice,
-         dbus-bin | systemd-sysv,
-         dconf-cli,
-         dconf-gsettings-backend,
-         default-dbus-system-bus | dbus-system-bus,
-         default-logind [linux-any] | logind [linux-any],
-         gir1.2-gdm-1.0 (= ${binary:Version}),
-         gnome-session | x-session-manager | x-window-manager | x-terminal-emulator,
-         gnome-session-bin (>= 50~alpha),
-         gnome-session-common (>= 50~alpha),
-         gnome-settings-daemon,
-         gnome-shell (>= 50~alpha),
-         gsettings-desktop-schemas,
-         libgdm1 (= ${binary:Version}),
-         libglib2.0-bin,
-         libnss-systemd (>= 258.1-2~),
-         libpam-modules,
-         libpam-runtime,
-         librsvg2-common,
-         polkitd [linux-any],
-         procps,
-         ucf,
-         x11-common,
-         x11-xserver-utils,
-         ${misc:Depends},
-         ${shlibs:Depends},
-Recommends: at-spi2-core,
-            desktop-base,
-            gnome-session | x-session-manager,
-            x11-xkb-utils,
-            zenity,
-Suggests: libpam-fprintd,
-          libpam-gnome-keyring,
-          libpam-pkcs11,
-          libpam-sss,
-          orca,
-Breaks: gnome-remote-desktop (<< 51~),
-Provides: x-display-manager,
+Depends:
+ accountsservice,
+ dbus-bin | systemd-sysv,
+ dconf-cli,
+ dconf-gsettings-backend,
+ default-dbus-system-bus | dbus-system-bus,
+ default-logind [linux-any] | logind [linux-any],
+ gir1.2-gdm-1.0 (= ${binary:Version}),
+ gnome-session | x-session-manager | x-window-manager | x-terminal-emulator,
+ gnome-session-bin (>= 50~alpha),
+ gnome-session-common (>= 50~alpha),
+ gnome-settings-daemon,
+ gnome-shell (>= 50~alpha),
+ gsettings-desktop-schemas,
+ libgdm1 (= ${binary:Version}),
+ libglib2.0-bin,
+ libnss-systemd (>= 258.1-2~),
+ libpam-modules,
+ libpam-runtime,
+ librsvg2-common,
+ polkitd [linux-any],
+ procps,
+ ucf,
+ x11-common,
+ x11-xserver-utils,
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends:
+ at-spi2-core,
+ desktop-base,
+ gnome-session | x-session-manager,
+ x11-xkb-utils,
+ zenity,
+Suggests:
+ libpam-fprintd,
+ libpam-gnome-keyring,
+ libpam-pkcs11,
+ libpam-sss,
+ orca,
+Breaks:
+ gnome-remote-desktop (<< 51~),
+Provides:
+ x-display-manager,
 Description: GNOME Display Manager
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
@@ -97,10 +105,12 @@ Description: GNOME Display Manager
 Package: libgdm1
 Architecture: linux-any
 Section: libs
-Depends: ${gir:Depends},
-         ${misc:Depends},
-         ${shlibs:Depends},
-Breaks: gnome-kiosk (<< 50),
+Depends:
+ ${gir:Depends},
+ ${misc:Depends},
+ ${shlibs:Depends},
+Breaks:
+ gnome-kiosk (<< 50),
 Description: GNOME Display Manager (shared library)
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
@@ -115,12 +125,14 @@ Description: GNOME Display Manager (shared library)
 Package: libgdm-dev
 Architecture: linux-any
 Section: libdevel
-Depends: gir1.2-gdm-1.0 (= ${binary:Version}),
-         libgdm1 (= ${binary:Version}),
-         libglib2.0-dev,
-         ${gir:Depends},
-         ${misc:Depends},
-Provides: ${gir:Provides},
+Depends:
+ gir1.2-gdm-1.0 (= ${binary:Version}),
+ libgdm1 (= ${binary:Version}),
+ libglib2.0-dev,
+ ${gir:Depends},
+ ${misc:Depends},
+Provides:
+ ${gir:Provides},
 Description: GNOME Display Manager (development files)
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
@@ -135,8 +147,9 @@ Description: GNOME Display Manager (development files)
 Package: gir1.2-gdm-1.0
 Architecture: linux-any
 Section: introspection
-Depends: ${gir:Depends},
-         ${misc:Depends},
+Depends:
+ ${gir:Depends},
+ ${misc:Depends},
 Description: GObject introspection data for the GNOME Display Manager
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
