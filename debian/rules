@@ -28,16 +28,15 @@ override_dh_installsystemd:
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
+		--auto-features=enabled \
 		-Ddistro=debian \
 		-Dat-spi-registryd-dir=/usr/lib/at-spi \
 		-Ddefault-path=/usr/local/bin:/usr/bin:/bin:/usr/games \
 		-Dcustom-conf=/etc/gdm3/daemon.conf \
-		-Dselinux=$(if $(filter linux,$(DEB_HOST_ARCH_OS)),enabled,disabled) \
 		-Dsysconfsubdir=gdm3 \
 		-Dworking-dir=/var/lib/gdm3 \
 		-Drun-dir=/run/gdm3 \
 		-Dpid-file=/run/gdm3.pid \
-		-Dplymouth=$(if $(filter linux,$(DEB_HOST_ARCH_OS)),enabled,disabled) \
 		-Dlog-dir=/var/log/gdm3 \
 		-Dpam-mod-dir=/usr/lib/$(DEB_HOST_MULTIARCH)/security \
 		-Ddefaults-conf=/usr/share/gdm/defaults.conf \
