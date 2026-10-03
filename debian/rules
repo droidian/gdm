@@ -29,21 +29,21 @@ override_dh_installsystemd:
 override_dh_auto_configure:
 	dh_auto_configure -- \
 		--auto-features=enabled \
-		-Ddistro=debian \
 		-Dat-spi-registryd-dir=/usr/lib/at-spi \
-		-Ddefault-path=/usr/local/bin:/usr/bin:/bin:/usr/games \
 		-Dcustom-conf=/etc/gdm3/daemon.conf \
-		-Dsysconfsubdir=gdm3 \
-		-Dworking-dir=/var/lib/gdm3 \
-		-Drun-dir=/run/gdm3 \
-		-Dpid-file=/run/gdm3.pid \
-		-Dlog-dir=/var/log/gdm3 \
-		-Dpam-mod-dir=/usr/lib/$(DEB_HOST_MULTIARCH)/security \
+		-Ddefault-path=/usr/local/bin:/usr/bin:/bin:/usr/games \
 		-Ddefaults-conf=/usr/share/gdm/defaults.conf \
+		-Ddistro=debian \
 		-Dgdm-xsession=true \
 		-Dgroup=Debian-gdm \
 		-Dlang-file=/etc/default/locale \
-		-Dx11-support=true \
+		-Dlog-dir=/var/log/gdm3 \
+		-Dpam-mod-dir=/usr/lib/$(DEB_HOST_MULTIARCH)/security \
+		-Dpid-file=/run/gdm3.pid \
+		-Drun-dir=/run/gdm3 \
+		-Dsysconfsubdir=gdm3 \
+		-Dworking-dir=/var/lib/gdm3 \
+		-Dx11-support=true
 
 override_dh_auto_build: $(OUTFILES) $(MANPAGES)
 	dh_auto_build
@@ -53,9 +53,9 @@ ifneq ($(filter gdm3,$(shell dh_listpackages)),)
 	mv debian/gdm3/usr/sbin/gdm debian/gdm3/usr/sbin/gdm3
 	chmod 755 debian/gdm3/usr/share/gdm/generate-config
 	dh_installpam -pgdm3 --name=gdm-autologin
+	dh_installpam -pgdm3 --name=gdm-fingerprint
 	dh_installpam -pgdm3 --name=gdm-launch-environment
 	dh_installpam -pgdm3 --name=gdm-password
-	dh_installpam -pgdm3 --name=gdm-fingerprint
 	dh_installpam -pgdm3 --name=gdm-smartcard-sssd-exclusive
 	dh_installpam -pgdm3 --name=gdm-smartcard-sssd-or-password
 	dh_installpam -pgdm3 --name=gdm-smartcard-pkcs11-exclusive
