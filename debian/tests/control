@@ -1,10 +1,7 @@
-Test-Command: sudo env
-  OFFLINE_MODE=1
-  GDM_USER=Debian-gdm
-  bash debian/tests/sssd-gdm-smartcard-pam-auth-tester.sh
-Features: test-name=sssd-gdm-smartcard-auth-test
-Classes: desktop
+Test-Command: sudo env  OFFLINE_MODE=1  GDM_USER=Debian-gdm  bash debian/tests/sssd-gdm-smartcard-pam-auth-tester.sh
+Features: test-name=sssd-gdm-smartcard-auth-test,
 Architecture: !armel
+Classes: desktop
 Depends: bash,
          gdm3,
          gnutls-bin,
@@ -14,18 +11,18 @@ Depends: bash,
          passwd,
          softhsm2,
          sssd,
-         util-linux
-Restrictions: breaks-testbed,
+         util-linux,
+Restrictions: allow-stderr,
+              breaks-testbed,
               isolation-container,
               needs-sudo,
-              allow-stderr
 
-Tests: greeter
-Depends: gdm3,
-         dpkg-dev,
+Tests: greeter,
+Depends: dpkg-dev,
+         gdm3,
+         gir1.2-glib-2.0,
          python3,
          python3-gi,
-         gir1.2-glib-2.0,
 Restrictions: breaks-testbed,
               isolation-machine,
               needs-root,
