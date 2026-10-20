@@ -94,7 +94,10 @@ enum {
         PROP_USER_MEMBER_OF,
         PROP_DCONF_PROFILE,
         PROP_SESSION_NAME,
+        N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 enum {
         OPENED,
@@ -473,7 +476,7 @@ on_session_exited (GdmSession           *session,
                    int                   exit_code,
                    GdmLaunchEnvironment *launch_environment)
 {
-        gdm_session_stop_conversation (launch_environment->session, "gdm-launch-environment");
+        gdm_session_stop_conversation (launch_environment->session, GDM_SESSION_LAUNCH_ENVIRONMENT_SERVICE);
 
         g_signal_emit (G_OBJECT (launch_environment), signals [EXITED], 0, exit_code);
 }
@@ -483,7 +486,7 @@ on_session_died (GdmSession           *session,
                  int                   signal_number,
                  GdmLaunchEnvironment *launch_environment)
 {
-        gdm_session_stop_conversation (launch_environment->session, "gdm-launch-environment");
+        gdm_session_stop_conversation (launch_environment->session, GDM_SESSION_LAUNCH_ENVIRONMENT_SERVICE);
 
         g_signal_emit (G_OBJECT (launch_environment), signals [DIED], 0, signal_number);
 }
@@ -501,7 +504,7 @@ on_conversation_started (GdmSession           *session,
         log_path = g_build_filename (LOGDIR, log_file, NULL);
 
         gdm_session_setup_for_program (launch_environment->session,
-                                       "gdm-launch-environment",
+                                       GDM_SESSION_LAUNCH_ENVIRONMENT_SERVICE,
                                        launch_environment->dyn_user_name,
                                        log_path);
 }
@@ -615,7 +618,7 @@ gdm_launch_environment_start (GdmLaunchEnvironment *launch_environment)
                                  launch_environment,
                                  0);
 
-        gdm_session_start_conversation (launch_environment->session, "gdm-launch-environment");
+        gdm_session_start_conversation (launch_environment->session, GDM_SESSION_LAUNCH_ENVIRONMENT_SERVICE);
         gdm_session_select_session (launch_environment->session, launch_environment->session_name);
 
         g_object_set (G_OBJECT (launch_environment->session),
@@ -820,62 +823,40 @@ gdm_launch_environment_class_init (GdmLaunchEnvironmentClass *klass)
         object_class->set_property = gdm_launch_environment_set_property;
         object_class->finalize = gdm_launch_environment_finalize;
 
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_SEAT_ID,
-                                         g_param_spec_string ("display-seat-id",
-                                                              "seat id",
-                                                              "seat id",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_HOSTNAME,
-                                         g_param_spec_string ("display-hostname",
-                                                              "hostname",
-                                                              "hostname",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_IS_LOCAL,
-                                         g_param_spec_boolean ("display-is-local",
-                                                               "is local",
-                                                               "is local",
-                                                               FALSE,
-                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_PREFERRED_USER_NAME,
-                                         g_param_spec_string ("preferred-user-name",
-                                                              "preferred user name",
-                                                              "preferred user name",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_USER_DISP_NAME,
-                                         g_param_spec_string ("user-display-name",
-                                                              "user display name",
-                                                              "user display name",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_USER_MEMBER_OF,
-                                         g_param_spec_string ("user-member-of",
-                                                              "user member of",
-                                                              "user member of",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_DCONF_PROFILE,
-                                         g_param_spec_string ("dconf-profile",
-                                                              "dconf profile",
-                                                              "dconf profile",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_SESSION_NAME,
-                                         g_param_spec_string ("session-name",
-                                                              "session name",
-                                                              "session name",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+        props[PROP_DISPLAY_SEAT_ID] = g_param_spec_string ("display-seat-id",
+                                                           NULL, NULL,
+                                                           NULL,
+                                                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+        props[PROP_DISPLAY_HOSTNAME] = g_param_spec_string ("display-hostname",
+                                                            NULL, NULL,
+                                                            NULL,
+                                                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+        props[PROP_DISPLAY_IS_LOCAL] = g_param_spec_boolean ("display-is-local",
+                                                             NULL, NULL,
+                                                             FALSE,
+                                                             G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+        props[PROP_PREFERRED_USER_NAME] = g_param_spec_string ("preferred-user-name",
+                                                               NULL, NULL,
+                                                               NULL,
+                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+        props[PROP_USER_DISP_NAME] = g_param_spec_string ("user-display-name",
+                                                          NULL, NULL,
+                                                          NULL,
+                                                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+        props[PROP_USER_MEMBER_OF] = g_param_spec_string ("user-member-of",
+                                                          NULL, NULL,
+                                                          NULL,
+                                                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+        props[PROP_DCONF_PROFILE] = g_param_spec_string ("dconf-profile",
+                                                         NULL, NULL,
+                                                         NULL,
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+        props[PROP_SESSION_NAME] = g_param_spec_string ("session-name",
+                                                        NULL, NULL,
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
+        g_object_class_install_properties (object_class, N_PROPS, props);
         signals [OPENED] =
                 g_signal_new ("opened",
                               G_OBJECT_CLASS_TYPE (object_class),
