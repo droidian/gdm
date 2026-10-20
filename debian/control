@@ -8,10 +8,9 @@ Uploaders:
  Marco Trevisan (Treviño) <marco@ubuntu.com>,
 Section: gnome
 Build-Depends:
- debhelper-compat (= 13),
+ debhelper-compat (= 14),
  dh-sequence-gir,
  dh-sequence-gnome,
- dh-sequence-installsysusers,
  check,
  dconf-cli,
  docbook-xml,
@@ -75,8 +74,6 @@ Depends:
  ucf,
  x11-common,
  x11-xserver-utils,
- ${misc:Depends},
- ${shlibs:Depends},
 Recommends:
  at-spi2-core,
  desktop-base,
@@ -105,10 +102,6 @@ Description: GNOME Display Manager
 Package: libgdm1
 Architecture: linux-any
 Section: libs
-Depends:
- ${gir:Depends},
- ${misc:Depends},
- ${shlibs:Depends},
 Breaks:
  gnome-kiosk (<< 50),
 Description: GNOME Display Manager (shared library)
@@ -129,10 +122,6 @@ Depends:
  gir1.2-gdm-1.0 (= ${binary:Version}),
  libgdm1 (= ${binary:Version}),
  libglib2.0-dev,
- ${gir:Depends},
- ${misc:Depends},
-Provides:
- ${gir:Provides},
 Description: GNOME Display Manager (development files)
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
@@ -147,9 +136,6 @@ Description: GNOME Display Manager (development files)
 Package: gir1.2-gdm-1.0
 Architecture: linux-any
 Section: introspection
-Depends:
- ${gir:Depends},
- ${misc:Depends},
 Description: GObject introspection data for the GNOME Display Manager
  GDM provides the equivalent of a "login:" prompt for X displays: it
  asks for a login and starts graphical sessions.
