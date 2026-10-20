@@ -155,7 +155,10 @@ enum {
         PROP_CONVERSATION_ENVIRONMENT,
         PROP_SUPPORTED_SESSION_TYPES,
         PROP_SESSION_ID_OF_CALLER,
+        N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 enum {
         CONVERSATION_STARTED = 0,
@@ -1441,6 +1444,31 @@ handle_connection_from_worker (GDBusServer      *server,
         return TRUE;
 }
 
+static const char * const daemon_only_services[] = {
+        GDM_SESSION_AUTOLOGIN_SERVICE,
+        GDM_SESSION_LAUNCH_ENVIRONMENT_SERVICE,
+        NULL
+};
+
+static gboolean
+is_client_allowed_service (const char *service_name)
+{
+        int i;
+
+        if (strchr (service_name, '/') != NULL)
+                return FALSE;
+
+        if (g_ascii_strncasecmp (service_name, "gdm-", strlen ("gdm-")) != 0)
+                return FALSE;
+
+        for (i = 0; daemon_only_services[i] != NULL; i++) {
+                if (g_ascii_strcasecmp (service_name, daemon_only_services[i]) == 0)
+                        return FALSE;
+        }
+
+        return TRUE;
+}
+
 static GdmSessionConversation *
 begin_verification_conversation (GdmSession            *self,
                                  GDBusMethodInvocation *invocation,
@@ -1448,6 +1476,17 @@ begin_verification_conversation (GdmSession            *self,
 {
         GdmSessionConversation *conversation = NULL;
         gboolean conversation_started;
+
+        if (!is_client_allowed_service (service_name)) {
+                g_debug ("GdmSession: refusing client request to start service '%s'",
+                         service_name);
+                g_dbus_method_invocation_return_error (invocation,
+                                                       G_DBUS_ERROR,
+                                                       G_DBUS_ERROR_ACCESS_DENIED,
+                                                       "Clients may not start service '%s'",
+                                                       service_name);
+                return NULL;
+        }
 
         conversation_started = gdm_session_start_conversation (self, service_name);
 
@@ -1864,7 +1903,7 @@ gdm_session_handle_client_begin_auto_login (GdmDBusGreeter        *greeter_inter
                  gdm_session_get_session_id (self),
                  self);
 
-        gdm_session_setup_for_user (self, "gdm-autologin", username);
+        gdm_session_setup_for_user (self, GDM_SESSION_AUTOLOGIN_SERVICE, username);
 
         return TRUE;
 }
@@ -4098,90 +4137,60 @@ gdm_session_class_init (GdmSessionClass *session_class)
                               1,
                               G_TYPE_STRING);
 
-        g_object_class_install_property (object_class,
-                                         PROP_VERIFICATION_MODE,
-                                         g_param_spec_enum ("verification-mode",
-                                                            "verification mode",
-                                                            "verification mode",
-                                                            GDM_TYPE_SESSION_VERIFICATION_MODE,
-                                                            GDM_SESSION_VERIFICATION_MODE_LOGIN,
-                                                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_ALLOWED_USER,
-                                         g_param_spec_uint ("allowed-user",
-                                                            "allowed user",
-                                                            "allowed user ",
-                                                            0,
-                                                            G_MAXUINT,
-                                                            0,
-                                                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_CONVERSATION_ENVIRONMENT,
-                                         g_param_spec_pointer ("conversation-environment",
-                                                               "conversation environment",
-                                                               "conversation environment",
-                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
+        props[PROP_VERIFICATION_MODE] = g_param_spec_enum ("verification-mode",
+                                                           NULL, NULL,
+                                                           GDM_TYPE_SESSION_VERIFICATION_MODE,
+                                                           GDM_SESSION_VERIFICATION_MODE_LOGIN,
+                                                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+        props[PROP_ALLOWED_USER] = g_param_spec_uint ("allowed-user",
+                                                      NULL, NULL,
+                                                      0,
+                                                      G_MAXUINT,
+                                                      0,
+                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+        props[PROP_CONVERSATION_ENVIRONMENT] = g_param_spec_pointer ("conversation-environment",
+                                                                     NULL, NULL,
+                                                                     G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
-        g_object_class_install_property (object_class,
-                                         PROP_SESSION_TYPE,
-                                         g_param_spec_string ("session-type",
-                                                              NULL,
-                                                              NULL,
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_HOSTNAME,
-                                         g_param_spec_string ("display-hostname",
-                                                              "display hostname",
-                                                              "display hostname",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_IS_LOCAL,
-                                         g_param_spec_boolean ("display-is-local",
-                                                               "display is local",
-                                                               "display is local",
-                                                               TRUE,
-                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_IS_INITIAL,
-                                         g_param_spec_boolean ("display-is-initial",
-                                                               "display is initial",
-                                                               "display is initial",
+        props[PROP_SESSION_TYPE] = g_param_spec_string ("session-type",
+                                                        NULL,
+                                                        NULL,
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+        props[PROP_DISPLAY_HOSTNAME] = g_param_spec_string ("display-hostname",
+                                                            NULL, NULL,
+                                                            NULL,
+                                                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+        props[PROP_DISPLAY_IS_LOCAL] = g_param_spec_boolean ("display-is-local",
+                                                             NULL, NULL,
+                                                             TRUE,
+                                                             G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+        props[PROP_DISPLAY_IS_INITIAL] = g_param_spec_boolean ("display-is-initial",
+                                                               NULL, NULL,
                                                                FALSE,
-                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+                                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
         /* not construct only */
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_DEVICE,
-                                         g_param_spec_string ("display-device",
-                                                              "display device",
-                                                              "display device",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+        props[PROP_DISPLAY_DEVICE] = g_param_spec_string ("display-device",
+                                                          NULL, NULL,
+                                                          NULL,
+                                                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
-        g_object_class_install_property (object_class,
-                                         PROP_DISPLAY_SEAT_ID,
-                                         g_param_spec_string ("display-seat-id",
-                                                              "display seat id",
-                                                              "display seat id",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+        props[PROP_DISPLAY_SEAT_ID] = g_param_spec_string ("display-seat-id",
+                                                           NULL, NULL,
+                                                           NULL,
+                                                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
-        g_object_class_install_property (object_class,
-                                         PROP_SUPPORTED_SESSION_TYPES,
-                                         g_param_spec_boxed ("supported-session-types",
-                                                             "supported session types",
-                                                             "supported session types",
-                                                             G_TYPE_STRV,
-                                                             G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+        props[PROP_SUPPORTED_SESSION_TYPES] = g_param_spec_boxed ("supported-session-types",
+                                                                  NULL, NULL,
+                                                                  G_TYPE_STRV,
+                                                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
-        g_object_class_install_property (object_class,
-                                         PROP_SESSION_ID_OF_CALLER,
-                                         g_param_spec_string ("session-id-of-caller",
-                                                              "session id of caller",
-                                                              "session id of caller",
-                                                              NULL,
-                                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+        props[PROP_SESSION_ID_OF_CALLER] = g_param_spec_string ("session-id-of-caller",
+                                                                NULL, NULL,
+                                                                NULL,
+                                                                G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+
+        g_object_class_install_properties (object_class, N_PROPS, props);
 
         /* Ensure we can resolve errors */
         gdm_dbus_error_ensure (GDM_SESSION_WORKER_ERROR);

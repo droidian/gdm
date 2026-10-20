@@ -62,8 +62,11 @@ enum {
         PROP_SESSION_NAME,
         PROP_SESSION_TYPE,
         PROP_LANGUAGE_NAME,
-        PROP_IS_LOADED
+        PROP_IS_LOADED,
+        N_PROPS
 };
+
+static GParamSpec *props[N_PROPS] = { NULL, };
 
 G_DEFINE_TYPE (GdmSessionSettings, gdm_session_settings, G_TYPE_OBJECT)
 
@@ -83,31 +86,32 @@ static void
 gdm_session_settings_class_install_properties (GdmSessionSettingsClass *settings_class)
 {
         GObjectClass *object_class;
-        GParamSpec   *param_spec;
 
         object_class = G_OBJECT_CLASS (settings_class);
         object_class->set_property = gdm_session_settings_set_property;
         object_class->get_property = gdm_session_settings_get_property;
 
-        param_spec = g_param_spec_string ("session-name", "Session Name",
-                                          "The name of the session",
-                                          NULL, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-        g_object_class_install_property (object_class, PROP_SESSION_NAME, param_spec);
+        props[PROP_SESSION_NAME] = g_param_spec_string ("session-name",
+                                                        NULL, NULL,
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-        param_spec = g_param_spec_string ("session-type", "Session Type",
-                                          "The type of the session",
-                                          NULL, G_PARAM_READWRITE);
-        g_object_class_install_property (object_class, PROP_SESSION_TYPE, param_spec);
+        props[PROP_SESSION_TYPE] = g_param_spec_string ("session-type",
+                                                        NULL, NULL,
+                                                        NULL,
+                                                        G_PARAM_READWRITE);
 
-        param_spec = g_param_spec_string ("language-name", "Language Name",
-                                          "The name of the language",
-                                          NULL,
-                                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
-        g_object_class_install_property (object_class, PROP_LANGUAGE_NAME, param_spec);
+        props[PROP_LANGUAGE_NAME] = g_param_spec_string ("language-name",
+                                                         NULL, NULL,
+                                                         NULL,
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
-        param_spec = g_param_spec_boolean ("is-loaded", NULL, NULL,
-                                           FALSE, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
-        g_object_class_install_property (object_class, PROP_IS_LOADED, param_spec);
+        props[PROP_IS_LOADED] = g_param_spec_boolean ("is-loaded",
+                                                      NULL, NULL,
+                                                      FALSE,
+                                                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+        g_object_class_install_properties (object_class, N_PROPS, props);
 }
 
 static void
@@ -147,7 +151,7 @@ gdm_session_settings_set_language_name (GdmSessionSettings *settings,
         if (settings->language_name == NULL ||
             strcmp (settings->language_name, language_name) != 0) {
                 settings->language_name = g_strdup (language_name);
-                g_object_notify (G_OBJECT (settings), "language-name");
+                g_object_notify_by_pspec (G_OBJECT (settings), props[PROP_LANGUAGE_NAME]);
         }
 }
 
@@ -160,7 +164,7 @@ gdm_session_settings_set_session_name (GdmSessionSettings *settings,
         if (settings->session_name == NULL ||
             strcmp (settings->session_name, session_name) != 0) {
                 settings->session_name = g_strdup (session_name);
-                g_object_notify (G_OBJECT (settings), "session-name");
+                g_object_notify_by_pspec (G_OBJECT (settings), props[PROP_SESSION_NAME]);
         }
 }
 
@@ -173,7 +177,7 @@ gdm_session_settings_set_session_type (GdmSessionSettings *settings,
         if (settings->session_type == NULL ||
             g_strcmp0 (settings->session_type, session_type) != 0) {
                 settings->session_type = g_strdup (session_type);
-                g_object_notify (G_OBJECT (settings), "session-type");
+                g_object_notify_by_pspec (G_OBJECT (settings), props[PROP_SESSION_TYPE]);
         }
 }
 
@@ -315,7 +319,7 @@ load_settings_from_user (GdmSessionSettings *settings)
                 gdm_session_settings_set_language_name (settings, language_name);
         }
 
-        g_object_notify (G_OBJECT (settings), "is-loaded");
+        g_object_notify_by_pspec (G_OBJECT (settings), props[PROP_IS_LOADED]);
 }
 
 static void
